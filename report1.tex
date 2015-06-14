@@ -34,13 +34,16 @@
 %\begin{comment}
 \begin{abstract}
 
-When a program undergoes changes during development, updating the data flow information by doing exhaustive analysis is very cost 
-inefficient. So incremental data flow analysis is used which modifies only those data flow information of a program that has
-been changed, rather than recomputing entire data flow information of a program. The incremental analysis methods are known for bit-vector framework.
-These methods are not directly applicable to constant propagation. This report presents some issues in doing incremental analysis in Constant Propagation.
+When a program undergoes changes during development, updating the data flow information by doing exhaustive analysis is cost 
+inefficient. In such cases, incremental data flow analysis, which modifies only those data flow information of a program that has
+been changed, can be used. The savings made from avoiding the recomputation of the entire data flow information of a program can be
+significant. The incremental analysis methods are known for bit-vector framework.
+However, these methods are not directly applicable to non bit-vector framework. 
+This report presents some challenges involved in doing incremental analysis for non bit-vector framework, and proposes several solutions towards the same.
 
-This report also discribes PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC). We plan to enhance PRISM to support 
-incremental data flow analysis.
+This report also describes PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC). 
+We present \textit{Incremental Solver}, an enhanced version of the PRISM solver with the added capabilities 
+of context sensitive incremental analysis. We discuss the changes made and the challenges faced in detail.
 
 \end{abstract}
 %\end{comment}
@@ -60,6 +63,7 @@ incremental data flow analysis.
 When a program undergoes changes during development, some or all of data flow information computed earlier becomes invalid.
 Thus, recomputation of data flow values is required.
 \subsubsection{Motivating Example}
+
 Consider a control flow graph in Fig~\ref{fig:Intro_ex}~\cite{thesis_r} for available expression analysis. Table~\ref{tab:Initial Available_exp}(a) shows 
 an initial result which requires three iterations to converge. Suppose, expression $a+b$ in node $n6$ has been removed. To reflect this change, recomputing
 data flow information from scratch is shown in Table~\ref{tab:Initial Available_exp}(b). 
@@ -304,7 +308,7 @@ The generated new data flow values in an iteration are known as incremental valu
 incremental values). Therefore, propagating the incremental values during the analysis can reduce the redundant computations at a basic block.
 
 \item \textbf{Across different applications of an analysis:} \newline
-Let us consider the example shown in figure~\ref{fig:acr_app}. After performing Available expression analysis, we have a scope of doing constant propagation 
+Let us consider the example shown in figure~\ref{fig:acr_app}. After performing available expression analysis, we have a scope of doing constant propagation 
 analysis. After first pass of available expression analysis, expressions $x+1$ and $a+b$ are available at the OUT of $n2$. At the OUT of $n1$, the value of $x$ 
 is $10$. Therefore, after first pass of constant propagation the value of $y$ (at the OUT of $n2$) becomes 11. This can be further optimized by directly
 propagating the value of variable y in print statement. Now, if we further perform dead code elimination on the modified graph. The dead 
@@ -448,10 +452,10 @@ generates \textbf{java} classes. Then \textbf{Generated analyzer} takes IR as an
 \section{Scope of the project}
 
 This project aims at providing support for incremental data flow analysis in PRISM which involves changing the solver. Old version of PRISM 
-(implemented by Vinit) performs both unidirectional and bi-directional context sensitive analysis. But, it does not perform incremental data flow analysis.
+(implemented by Vinit) performs both unidirectional and bi-directional context sensitive analysis. However, it doesn't perform incremental data flow analysis.
 
 This report explains the implemented incremental solver. It also presents some issues in implementing incremental data flow analysis for non-bit vector
-framework. It discribes about the implemented Liveness-based Inter-procedural Reaching Definition Analysis in PRISM.
+framework. It describes the implemented Liveness-based Inter-procedural Reaching Definition Analysis in PRISM.
 
 
 
@@ -459,13 +463,13 @@ framework. It discribes about the implemented Liveness-based Inter-procedural Re
 \section{Organization of the report}
 The report is organized as follows. Chapter 2 describes incremental analysis and issues in doing incremental analysis for non-bit vector framework.
 Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Inter-procedural Reaching Definition analysis in 
-PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5. Chapter 7 describes some extensions
+PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5. Chapter 6 describes some extensions
 that can be made to the current work. 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental Data Flow Analysis}
-A Data flow framework~\cite{thesis_sir} is defined as a triple $D =\langle L,\sqcap,F\rangle$, where $L$ represents information associated 
+A Data Flow framework~\cite{thesis_sir} is defined as a triple $D =\langle L,\sqcap,F\rangle$, where $L$ represents information associated 
 with entry/exit of a basic block ($L$ is a partially ordered set ), $\sqcap$ represents a binary meet operation (e.g intersection or union) 
 which determines the way the global information is combined when it reaches a basic block, and $F$ represents a flow function. 
 There are two special elements are associated with this framework, $top$ denoted by $\top$ and $bot$ denoted by $\bot$, 
@@ -474,7 +478,7 @@ which can be defined as follows:
 \item {Top.}
 $\forall x \in L : x \sqcap \top = x $ 
 
-( Using $\top$, in place of any data flow value, will never miss out any possible value. Hence, it is an exhaustive approximation of all values.)
+(Using $\top$, in place of any data flow value, will never miss out any possible value. Hence, it is an exhaustive approximation of all values.)
 
 \item {Bottom.}
 $\forall x \in L : x \sqcap \bot =\bot $
@@ -620,13 +624,13 @@ in flow functions for bottom to top change.}
 
 
 \subsection{Handling Top to Bottom change}
-Since, $\forall x \in L : x \sqcap \top = x $, a top value for a data flow property is an intermediate value until the analysis is
-completed. But in case of bottom, $\forall x \in L : x \sqcap \bot =\bot $ ,is a final value even during analysis. So whenever there is top to bottom
-change in a program, the changes can be propagated directly to its neighbouring nodes.
+Given that $\forall x \in L : x \sqcap \top = x$, a top value for a data flow property is an intermediate value until the analysis is
+completed. But in case of a bottom value, $\forall x \in L : x \sqcap \bot =\bot $. Thus, a bottom value is a final value even during analysis. So whenever 
+there is a top to bottom change in a program, the changes can be propagated directly to its neighbouring nodes.
 
 Consider an example of available expressions analysis for the control flow graph in figure~\ref{fig:top_to_bot_bitvector}. In this case, the expression 
 $b*c$ is available at the OUT of both node n1 and n3 (i.e. the data flow value for $a*b$ is top) and so is available at the IN of $n2$. Let an assignment
-``$c=$" be inserted after the computation of $b*c$ in node $n3$. After this change, $b*c$ is not available at the OUT of node n3, i.e.top to bottom change
+``$c=$" be inserted after the computation of $b*c$ in node $n3$. After this change, $b*c$ is not available at the OUT of node n3, i.e. top to bottom change
 (refer to figure~\ref{fig:flow_func_top_to_bot}) at the OUT of $n3$ which in turn makes bottom at the IN of $n2$ since \textit{IN}$_2 = $\textit{OUT}$_1 \cap$ \textit{OUT}$_3 $,
 which implies that the value of \textit{IN}$_2 $ is determined by the value of \textit{OUT}$_3$ alone. Thus, the effect of top to bottom change
 can be incorporated by directly propagating the change to its neighbour. 
@@ -656,11 +660,11 @@ can be incorporated by directly propagating the change to its neighbour.
 \end{figure}
 
 \subsection{Handling Bottom to Top change}
-Bottom value is a final value even during analysis. Thus, whenever there is bottom to top change we cannot directly propagate the changes to its neighbours. 
+Bottom value is a final value even during the analysis. Thus, whenever there is a bottom to top change we cannot directly propagate the changes to its neighbours. 
 We need some more processing to incorporate this change.
 
-Consider control flow graph in figure~\ref{fig:top_to_bot_bitvector}, if there is a bottom to top change(refer to figure~\ref{fig:flow_func_top_to_bot}) at the OUT of $n3$. Then the value of \textit{IN}$_2$ cannot be directly 
-determined by \textit{OUT}$_3$ alone since now it depends on the value of \textit{OUT}$_1$ also. Thus, to incorporate the effect of bottom to top change requires some more processing.
+Consider control flow graph in figure~\ref{fig:top_to_bot_bitvector}, if there is a bottom to top change (figure~\ref{fig:flow_func_top_to_bot}) at the OUT of $n3$, the value of \textit{IN}$_2$ cannot be directly 
+determined by \textit{OUT}$_3$ alone since now it depends on the value of \textit{OUT}$_1$ also. Therefore, incorporating the effect of bottom to top change requires some more processing.
 
 The effect of bottom to top change can be incorporated in the following two steps:
 \begin{itemize}
@@ -745,8 +749,8 @@ Assume that the expression ``$b=2$" in $n3$ has been deleted. Now, we will calcu
 \item{The data flow values which were 0 and $may$ become 1 due to this change are shown in Table~\ref{tab:Available_exp_which_may_1}}
 
 At node $n3$, the expression ``$b=2$'' is killing the availability of expressions $a*b$ and $a+b$. So after the removal of $b=2$, 
-expression $a*b$ and $a+b$ may available at the OUT of $n3$ which in turn affects many other nodes. So, we will construct an \textbf{affected region}. The affected region
-is a set of program points where information may change.The affected region for Fig.~\ref{fig:bottom_to_top_motivating_ex} includes $\langle$ \textit{OUT}$_3,$ \textit{IN}$_5 ,$\textit{OUT}$_5,$
+expression $a*b$ and $a+b$ may available at the OUT of $n3$ which in turn affects many other nodes. So, we will construct an \textbf{affected region}.  
+The affected region is a set of program points where information may change. The affected region for fig~\ref{fig:bottom_to_top_motivating_ex} includes $\langle$ \textit{OUT}$_3,$ \textit{IN}$_5 ,$\textit{OUT}$_5,$
 \textit{IN}$_6,$ \textit{OUT}$_6,$ \textit{IN}$_2 ,$ \textit{OUT}$_2,$ \textit{IN}$_4,$ \textit{OUT}$_4,$ \textit{IN}$_3 \rangle$ 
 program points.
 
@@ -774,7 +778,7 @@ program points.
   \end{center}
 \end{table}
 
-\item{From the data flow values shown in Table~\ref{tab:Available_exp_which_may_1}, the data flow vales which must remain 0 are shown in 
+\item{From the data flow values shown in Table~\ref{tab:Available_exp_which_may_1}, the data flow values which must remain 0 are shown in 
 Table~\ref{tab:Available_exp_which_remain_0}}
 
 This step is again divided in two following parts:
@@ -787,7 +791,7 @@ those information to compute the data flow values. In Fig~\ref{fig:bottom_to_top
 \item  \textbf{Computing values at boundary nodes and propagating them}.
 
 At \textit{OUT}$_1$, $a*b$ is not available which makes $a*b$ not available at \textit{IN}$_2$. But $a+b$ is available at both \textit{OUT}$_1$ and \textit{OUT}$_5$ and hence is available at \textit{IN}$_2$.
-After computing the information at the \textit{IN}$_2$, we will propagate this information throughout the affected region. The resultant values which must remain 0 is shown
+After computing the information at the \textit{IN}$_2$, we will propagate this information throughout the affected region. The resultant values which must remain 0 are shown
 in Table~\ref{tab:Available_exp_which_remain_0}
 \end{itemize}
 
@@ -841,6 +845,9 @@ Thus, the final solution is shown in Table~\ref{tab:Available_exp_final_solution
   \end{center}
 \end{table}
 
+% multiple changes  
+We note that although the example above is for a single change, a similar method can be applied for multiple changes in the control flow graph.
+
 \subsection{Node listing as affected region}
 A \textit{node listing}~\cite{node_listing} for control flow graph \textit{G=(N,E,n$_0$)}, where \textit{N} is the set of nodes, \textit{E} is the set of edges, and \textit{n$_0$} is the
 program entry nodes, is defined to be a sequence 
@@ -886,11 +893,97 @@ also which leads to redundant computation. Our method of creating an affected re
 \end{figure}
 
 
-\subsection{Handling Multiple Fuction Changes}
+
 
 
 
 \subsection{Handling Structural Changes}
+The following two kinds of changes may take place:
+\begin{itemize}
+ \item Changes in the lattice. \newline
+ If there is a change in a lattice element, i.e. adding a new expression in the program or removing all computations of an 
+ expression from the program. Such a change needs to be processed using an exhaustive analysis.
+ \item Changes in the graph. \newline
+ Consider an edge $e = (i,j)$. Let u $\equiv$ OUT$_i$ and v $\equiv$ IN$_j$,
+ two flow functions $h(u,v)$ and $h(v,u)$ are associated with an edge e.
+ \begin{itemize}
+  \item Deletion of an edge: \newline
+  Deleting an edge $e$ will delete functions $h(u,v)$ and $h(v,u)$. We know that a non-existant function is a constant function $\top$. Thus, some functions
+  may change to $\top$ which is a Bottom to Top change.
+  \item Insertion of an edge:\newline
+  Inserting an edge $e$ will add two new functions $h(u,v)$ and $h(v,u)$ which is a Top to Bottom change.
+  \item Deletion of a node: \newline
+  Deletion of a node involves both Top to Bottom and Bottom to Top changes as illustrated in figure \ref{fig:delnodexample}.
+  The deletion of the node $k$ starts with the removal of edges $e1 = (i, k)$ and $e2 = (k, j)$, a Bottom to Top change. 
+  This is followed by addition of the edge $e3 = (i, j)$, a Top to Bottom change.
+
+  \begin{figure}[!htb]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(35, 45)(65, 85)
+%\psframe(35, 45)(65, 85)
+\putnode{n1}{origin}{50}{80}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+	       \rput(40,80){\rnode{a}{$i$}}
+	       \rput(45, 75){\rnode{a}{$u$}}
+	       \rput(45, 70){\rnode{a}{$k_1$}}
+	       \rput(45, 60){\rnode{a}{$k_2$}}
+	       \rput(45, 55){\rnode{a}{$v$}}
+\putnode{n2}{n1}{0}{-15}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+	        \rput(40,65){\rnode{b}{$k$}}
+\putnode{n3}{n2}{0}{-15}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+		\rput(40,50){\rnode{c}{$j$}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\nccurve[angleA=330,angleB=30,ncurv=0.75,linestyle=dotted, linecolor = red, linewidth = 0.6]{->}{n1}{n3}
+
+\end{pspicture}
+\caption{Deletion of a Node}
+   \label{fig:delnodexample}
+\end{figure}
+
+  
+  
+  \item Insertion of a node:\\
+  The process of insertion of a node is complementary to the deletion process explained above. 
+  The insertion process, as illustrated in figure \ref{fig:insnodexample}, starts with 
+  deletion of the edge $e1 = (i, j)$, a Bottom to Top change. This is followed by insertion of edges $e2 = (i, k)$  and $e3 = (k, j)$, a Top to Bottom change.
+  
+  \begin{figure}[!htb]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(35, 45)(65, 85)
+%\psframe(35, 45)(65, 85)
+\putnode{n1}{origin}{50}{80}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+	       \rput(40,80){\rnode{a}{$i$}}
+	       \rput(45, 75){\rnode{a}{$u$}}
+	       \rput(45, 70){\rnode{a}{$k_1$}}
+	       \rput(45, 60){\rnode{a}{$k_2$}}
+	       \rput(45, 55){\rnode{a}{$v$}}
+\putnode{n2}{n1}{0}{-15}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+	        \rput(40,65){\rnode{b}{$k$}}
+\putnode{n3}{n2}{0}{-15}{%
+	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+		\rput(40,50){\rnode{c}{$j$}}
+
+\ncline[linestyle=dotted, linecolor = red, linewidth = 0.6]{->}{n1}{n2}
+\ncline[linestyle=dotted, linecolor = red, linewidth = 0.6]{->}{n2}{n3}
+\nccurve[angleA=330,angleB=30,ncurv=0.75]{->}{n1}{n3}
+
+\end{pspicture}
+\caption{Insertion of a Node}
+   \label{fig:insnodexample}
+\end{figure}
+
+ \end{itemize}
+
+\end{itemize}
+\begin{comment}
 Control flow graph will change due to the following:
 \begin{itemize}
  \item Adding a node
@@ -898,6 +991,7 @@ Control flow graph will change due to the following:
  \item Adding an edge
  \item Deleting an edge
  \end{itemize}
+ \end{comment}
  
  For adding a node/edge, we need not create an affected region since the effect of adding a node/edge will always go down the graph.
  Otherwise, we need to create an affected region.
