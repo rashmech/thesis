@@ -1,0 +1,5 @@
+#!/bin/bash
+#latex report1.tex
+#vips -o report1.ps report1
+ps2pdf report1.ps
+evince report1.pdf &

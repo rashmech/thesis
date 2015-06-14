@@ -1,0 +1,30 @@
+# Throughput without interference was a constant 62.67 Kbps
+Packet-Generation-Period-(ms)	Without-Hopping	With-Hopping	Without-Interference
+
+bzip2     26.852  4.711
+mcf	  3.996   0.695
+hmmer	  2.570	  0.654
+sjeng	  39.232  3.576
+h264ref	  6.297	  5.259
+lbm	  6.526	  1.616
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
