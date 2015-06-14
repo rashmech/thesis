@@ -917,7 +917,7 @@ affected region then in the worst case it requires \textit{O(m)} time to identif
 One approach~\cite{inc1} is based on Context Free Language(CFG) reachability for incremental analysis of context-sensitive points-to analysis. It traces the CFL-reachable
 paths which was traversed during computation of points-to sets to precisely identify and recompute the affected points-to sets when the program changes made. 
 
-Another approach~\cite{inc2} is to first compare the old and new code version and generates a structural diff. This diff will gives information about which nodes and edges in the 
+Another approach~\cite{inc2} is to first compare the old and new code version and generates a structural diff. This diff will give information about which nodes and edges in the 
 program's inter-procedural control-flow graph (ICFG) were added or removed. Then we will call all nodes that were added or removed as \textit{changed} nodes and infer from
 all the changed the set of \textit{affected} nodes. Affected nodes are all nodes which are reachable from changed nodes which is an over approximation.
 Then it follows a clear-and-propagate strategy: for each affected node it first clears the analysis information computed and then re-propagates the information from
