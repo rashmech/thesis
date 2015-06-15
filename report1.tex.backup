@@ -14,6 +14,8 @@
 \usepackage{verbatim}
 \usepackage{pgfplots} 
 \usepackage{courier}
+\usepackage{algorithm,algpseudocode}
+\usepackage{enumitem}
 \lstset{basicstyle=\footnotesize\ttfamily}
 
 \pgfplotsset{width=10cm,compat=1.5}
@@ -1012,17 +1014,13 @@ One approach~\cite{inc1} is based on Context Free Language(CFG) reachability for
 paths which was traversed during computation of points-to sets to precisely identify and recompute the affected points-to sets when the program changes made. 
 
 Another approach~\cite{inc2}, generates a structural difference between the old and new code version, called as \textit{diff}. The \textit{diff} 
-provides an information of added and removed nodes/edges from the inter-procedural control-flow graph(ICFG). Added or removed nodes are called as 
-
-Another approach~\cite{inc2} is to first compare the old and new code version and generates a structural diff. This diff will give information about 
-which nodes and edges in the program's inter-procedural control-flow graph (ICFG) were added or removed.
-Added or removed nodes are named as \textit{changed} nodes and infer the set of \textit{affected} nodes from the set of \textit{changed} nodes. 
-Affected nodes are all nodes which are reachable from changed nodes which is an over approximation.
-Then it follows a clear-and-propagate strategy: for each affected node it first clears the analysis information computed and then re-propagates the information from
-all the node’s predecessors. Basically affected region is created always.
+provides an information of added and removed nodes/edges from the inter-procedural control-flow graph(ICFG). Added or removed nodes are called as
+\textit{changed} nodes. The set of \textit{affected} nodes will contains all the nodes which are reachable from the \textit{changed} nodes(which is an over approximation). The set of \textit{affected} nodes are inferred from the set of \textit{changed} node. 
+This is followed by a clear-and-propagate strategy: for each affected node, it clears the  computed information
+and then re-propagates the information from all the node’s predecessors. Basically, it creates an affected region for all kind of changes.
 
 
-\section{Incremental Analysis in Constant Propagation analysis}
+\section{Incremental Analysis in Non Bit-vector Framework}
 \begin{figure}[H]
 \centering
 \psset{unit=1mm}
@@ -1074,12 +1072,12 @@ Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:n
 \begin{itemize}
 \item Top : It is similar to the raise function in bit-vector framework. It always results in Top value.
 \item Bottom : It is similar to the lower function in bit-vector framework. It always results in Bottom value.
- \item Constant : Function whose result is always constant. Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(a), the flow function at node n2
- will always produce a constant value 1 at the OUT of n2. There is one function per value.
+ \item Constant : Function whose result is always constant. Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(a),
+ the flow function at node n2 will always produce a constant value 1 at the OUT of n2. There is one function per value.
   \item Side level : Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(b), the value 
- of $a$ at node n3 depends on the value of $b$ and $c$. If $b$ and $c$ is constant, as in the figure, then $a$ will also become constant. If any of them is top then
- $a$ will become top and $a$ will become bottom if any of the operands is bottom. Flow functions for these type of statements whose value depends on the operands of the 
- statement is known as side level function.
+ of $a$ at node n3 depends on the value of $b$ and $c$. If $b$ and $c$ is constant, as in the figure, then $a$ will also become constant. If any of them
+ is top/bottom then $a$ will become top/bottom.
+ Flow functions for these type of statements whose value depends on the operands of the statement is known as side level function.
  \end{itemize}
 
 \begin{figure}[h]
@@ -1327,8 +1325,8 @@ becomes $1$ which is a bottom ($\bot$) to upper level change in lattice.
 \end{comment}
 
 \subsubsection{Change from intermediate level to top}
-Consider a Constant propagation analysis in control flow graph shown in figure~\ref{fig:inter_otherlevels_upper}. In this case, if expression $b=a$ is removed from the 
-node, then $b$ will become $\top$ at the OUT of node $n3$ since the earlier value of $b$ was 1, this a change to top.
+Consider a Constant propagation analysis in control flow graph shown in figure~\ref{fig:inter_otherlevels_upper}.
+In this case, if expression $b=a$ is removed from the node then $b$ will become $\top$ at the OUT of node $n3$, a change from intermediate level to top($\bot$).
 \begin{figure}[t]
 \centering
 \psset{unit=1mm}
@@ -1424,8 +1422,9 @@ node, then $b$ will become $\top$ at the OUT of node $n3$ since the earlier valu
 \end{figure}
 
 \subsubsection{Change from intermediate level to bottom}
-Consider a control flow graph as shown in figure~\ref{fig:inter_otherlevels_lower}. After removal of expression $b=a$ at node $n5$, $b$ becomes bottom($\bot$) at 
-the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)) since the earlier value of $b$ was 2 at OUT of $n4$, this is a change to bottom($\bot$).
+Consider a control flow graph as shown in figure~\ref{fig:inter_otherlevels_lower}.
+After a removal of expression $b=a$ at node $n4$, $b$ becomes bottom($\bot$) at 
+the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)), a change from intermediate level to bottom($\bot$).
 
 \begin{figure}[H]
 \centering
@@ -1525,8 +1524,7 @@ the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)) s
 
 \subsubsection{Side level change}
 Consider a control flow graph as shown in figure~\ref{fig:inter_otherlevels}. Suppose, expression $b=a$ at node $n3$ has been removed as shown in 
-figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the OUT of node $n3$ since the earlier value of $b$ was 1, this is a side level change in
-the lattice.
+figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the OUT of node $n3$, a side level change in the lattice.
 
 \begin{figure}[H]
 \centering
@@ -1626,496 +1624,104 @@ the lattice.
 
 
 \section{Issues in Incremental Analysis for Constant Propagation}
-In Constant propagation analysis  when there is a change to bottom(i.e undefined) due to a program change we need not to create an affected region, otherwise we need
-to create an affected region. Possible changes in the flow function when we need not create an affected region is shown in Figure~\ref{fig:flow_func_changes_nonbit}.
-
-Bottom function corresponds corresponds to reading values from input. Therefore, a change to bottom due to a program change is very infrequent and hence we may need 
-to create an affected region for almost all the cases. Unlike bit-vector framework, bottom is also produced due to the meet operation. Therefore, it may be possible to restrict the size of affected
-region even if we are unable to avoid it.
-
-Consider an example in Figure~\ref{fig:inter_otherlevels_const}. Let at node n1 expression ``$b=1$'' as in fig~\ref{fig:inter_otherlevels_const}(a) is changed to
-``$b=2$'' due to a program change as shown in fig~\ref{fig:inter_otherlevels_const}(b). Now at IN of node $n3$, two different values of $b$ are reaching which makes 
-$b$=$\bot$. In this case we can restrict the size of affected region. Therfore, we need some method to restrict ourself in creating an affected region.
-
-
- \begin{figure}[!htb]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,-20)(0,60)
-%%\psframe(0,0)(50,50)
-\putnode{n1}{origin}{-15}{40}{%
-     \psframebox[linewidth=.3,framesep=2.5]{top}}
- \putnode{a}{n1}{0}{10}{\textit{old}}
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{side level}}
-\putnode{n3}{n2}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{propagate}}
-\putnode{n4}{n3}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{constant}}
-     %  \putnode{a}{n2}{-10}{0}{n2}
-
-
-\putnode{n12}{n1}{30}{-20}{%
-     \psframebox[linewidth=.3,framesep=2.5]{bottom}}
- \putnode{a}{n1}{28}{10}{\textit{new}}
-    
-% \putnode{a}{n22}{-10}{0}{n2}
-\putnode{a1}{n4}{15}{-10}{(a)}
-\ncline{->}{n1}{n12}
-\ncline{->}{n2}{n12}
-\ncline{->}{n3}{n12}
-\ncline{->}{n4}{n12}
-
-\psline[linestyle=dotted](0,45)(0,-10)
-
-\end{pspicture}
-\caption[possible flow functions for constant propagation]{Possible changes in flow function when we need not create an affected region}
-   \label{fig:flow_func_changes_nonbit}
-\end{figure}
-
+Consider the example in figure~\ref{fig:incr_non-bit1}. Unlike bit-vector framework, the information at IN of the node $n4$ is dependent on the information
+at its OUT. Now suppose that this expression is removed due to some change in the program. To incorporate this change, if we propagate the IN
+information to its neighbour then this will give incorrect result. In such cases, when the IN information of a node is dependent on 
+the information at its OUT, affected region needs to be created. We next elaborate on detection of such cases.
 \begin{figure}[H]
 \centering
 \psset{unit=1mm}
-\begin{pspicture}(0,25)(150,90)
-%%\psframe(0,15)(150,90)
-\putnode{n1}{origin}{10}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=1$}}
-\rput(20,80){\rnode{a}{n1}}
-\rput(-5,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(-5,74){\rnode{a2}{\blue$\langle b=1 \rangle$}}
+\begin{pspicture}(0,20)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n1}{origin}{40}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(30,80){\rnode{a}{n1}}
+\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n2}{n1}{40}{0}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(60,80){\rnode{b}{n2}}
-\rput(37,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(37,77){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+\rput(69,80){\rnode{b}{n2}}
+\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n3}{n1}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(40,65){\rnode{c}{n3}}
-\rput(16,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(16,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(49,65){\rnode{c}{n3}}
+\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n4}{n1}{20}{-30}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(40,50){\rnode{a}{n4}}
-\rput(16,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(16,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
-\putnode{n5}{n1}{20}{-45}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{n5}}
-\rput(16,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(16,30){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
-\putnode{n6}{n5}{0}{-10}{(a)}
-
-\ncline{->}{n1}{n3}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n4}
-\ncline{->}{n4}{n5}
-% \ncline{->}{n5}{n6}
-
-
-\putnode{n1}{origin}{90}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(100,80){\rnode{a}{n1}}
-\rput(74,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(74,74){\rnode{a2}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n2}{n1}{40}{0}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(140,80){\rnode{a}{n2}}
-\rput(117,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(117,76){\rnode{b2}{\blue$\langle b=3 \rangle$}}
-
-
-\putnode{n3}{n1}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(120,65){\rnode{a}{n3}}
-\rput(97,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(97,61){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
-
-
-\putnode{n4}{n1}{20}{-30}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(120,50){\rnode{a}{n4}}
-\rput(97,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(97,46){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(49,50){\rnode{a}{n4}}
+\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
 
 \putnode{n5}{n1}{20}{-45}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(120,35){\rnode{a}{n5}}
-\rput(97,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(97,30){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
-\putnode{n6}{n5}{0}{-10}{(b)}
-
+\rput(49,35){\rnode{a}{n5}}
+\rput(47,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
+\rput(47,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
 
 \ncline{->}{n1}{n3}
 \ncline{->}{n2}{n3}
 \ncline{->}{n3}{n4}
 \ncline{->}{n4}{n5}
-% \ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-15,
+                linearc=0.5,offsetA=1, offsetB=1]{->}{n5}{n3}
 
-
-		
 \end{pspicture}
-\caption[Change from intermediate level to bottom in Non-bit vector framework]{Change from intermediate level to bottom}
-   \label{fig:inter_otherlevels_const}
+\caption{Constant propagation analysis}
+   \label{fig:incr_non-bit1}
 \end{figure}
 
-\begin{comment}
-Consider constant propagation analysis in control flow graph shown in figure~\ref{fig:inter_otherlevels}. Due to expression $b=a$ at node $n3$, $b$ becomes 1 at the OUT of node $n3$.
-At the IN of node $n5$, two values of b are reaching from two different paths. So, $b$ becomes $\bot$ at the IN of node $n5$ which in turn makes $b=\bot$ at \textit{IN}$_2$
-and hence at \textit{IN}$_3$. Therefore, due to the presence of a loop, the value of $b$ at the \textit{IN}$_3$ is dependent on the expression present in $n3$ itself.  
+%Now the problem is to detect whether the IN information is dependent on the information at its OUT of the node or not. 
+\subsection{Detecting Dependencies of IN Information on OUT information for a node}
+We first list the necessary definitions before presenting the dependency detection algorithm.
 
-
-
-If this expression is removed due to some program change, at the OUT of $n3$ it seems that there is a change to $\bot$ because the value at IN ib $\bot$ and if we propagate the value at 
-IN to OUT then it will give us an incorrect result. Therfore, unlike bit-vector framework, due to presence of self-sustainable values we cannot detect the type
-of change at the OUT of changed node. Hence,we need some more computation to detect this type of self-sustainable values so that we can create an affected region
-to propagate the changes.
-
-
-
-
-
-
-\section{The Proposed method of performing incremental analysis for Constant Propagation}
-This section describes the method of doing incremental analysis for constant propagation. A node may contain self-sustainable values as described in previous section
-which may lead to an incorrect result. So, we need some method to detect this self-sustainable values.
-Following are the steps for incremental analysis in Non-bit vector framework:
 \begin{itemize}
-\item Detect whether self-sustainable value is present or not. 
-\item Identify affected region and initialize each program point in affected region to $\top$: In figure~\ref{fig:detecting_loop}, the affected region is $\langle n3,n5,n2,n4,n6\rangle$ 
- \item Identify the boundary node: In figure~\ref{fig:working_example1}  $n2$ is a boundary node.
- \item Computing values at the boundary node and propagating them.
+ \item \textbf{Changed Node}: A node which has been changed during program development. Node $n4$ in figure~\ref{fig:incr_non-bit1} is a \textit{Changed Node}
+\item \textbf{Meet Node}:
+A node $N$ should satisfy the following the criteria in order to be called a meet node.
+\begin{itemize}
+\item $N\in$\textit{dominant frontier} \footnote{TODO: define the dominant frontier or add reference}
+\item There exits a path, $p$, from a \textit{Changed Node} to $N$ and vice versa.
+\item The path $p$ should not have any re-definition of the assigned variable in the changed expression. 
 \end{itemize}
 
-
-\subsection{Detecting self-sustainable values}
-If we can determine what are the definitions reaching at the IN of changed node, then we can detect whether self-sustainable values are present or not.
-For this purpose, we will perform reaching definition analysis.
-
-Consider a reaching definition analysis in control flow graph shown in fig~\ref{fig:detecting_loop}. At the IN of node $n3$, two definitions of $b$ are reaching, 
-i.e definition at node $n1$ ($\langle b,1 \rangle$) and at node $n3$ ($\langle b,3 \rangle$). Suppose due to some program change the expression at node $n3$ has 
-been removed. The definition of the variable $b$, which was defined in the changed node, is reaching to the IN of that node itself. So we can say that there is a 
-path from changed node to itself and hence it may contains self-sustainable values at the IN of changed node.
-Therefore we cannot determine the type of change at the OUT of changed node. Hence, we need to create an affected region because the definition at changed node 
-may itself contribute to the value at the IN of that node. 
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,10)(100,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{50}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$,$b=2$}}
-\rput(35,80){\rnode{a}{n1}}
-\rput(33,84){\rnode{a1}{\blue \{$\langle \phi \rangle$\}}}
-\rput(32,76){\rnode{a2}{\blue \{$\langle b,1 \rangle$\}}}
-
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
-\rput(37,65){\rnode{a}{n2}}
-\rput(30,70){\rnode{a1}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-\rput(30,61){\rnode{a2}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=a$}}
-\rput(20,50){\rnode{a}{n3}}
-\rput(20,55){\rnode{a1}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-\rput(20,45){\rnode{a2}{\blue \{$\langle b,3 \rangle$\}}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(57,50){\rnode{a}{n4}}
-\rput(73,55){\rnode{a1}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-\rput(73,45){\rnode{a2}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{n5}}
-\rput(30,39){\rnode{a1}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-\rput(30,31){\rnode{a2}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-
-
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(39,20){\rnode{a}{n6}}
-\rput(30,24){\rnode{a1}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-\rput(30,16){\rnode{a2}{\blue \{$\langle b,1 \rangle, \langle b,3 \rangle$\}}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
-		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-		
-\end{pspicture}
-\caption[Control flow graph for detecting self-sustainable values]{Control Flow Graph for detecting self-sustainable values}
-   \label{fig:detecting_loop}
-\end{figure}
-
-\subsection{Working Example}
-Consider a constant propagation analysis in figure~\ref{fig:working_example1}. Initial analysis is shown in table~\ref{tab:Initial_constant_propagation_motivating}.
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,10)(100,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{50}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$,$b=2$}}
-\rput(35,80){\rnode{a}{n1}}
-\rput(33,84){\rnode{a1}{\blue $\langle \bot,\bot \rangle$}}
-\rput(33,76){\rnode{a2}{\blue $\langle 1,2 \rangle$}}
-
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
-\rput(37,65){\rnode{a}{n2}}
-\rput(36,70){\rnode{a1}{\blue $\langle 1,\bot \rangle$}}
-\rput(36,61){\rnode{a2}{\blue $\langle 1,\bot \rangle$}}
-
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=a$}}
-\rput(20,50){\rnode{a}{n3}}
-\rput(20,55){\rnode{a1}{\blue $\langle 1,\bot \rangle$}}
-\rput(20,45){\rnode{a2}{\blue $\langle 1,1 \rangle$}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(57,50){\rnode{a}{n4}}
-\rput(73,55){\rnode{a1}{\blue $\langle 1,\bot \rangle$}}
-\rput(73,45){\rnode{a2}{\blue $\langle 1,\bot \rangle$}}
-
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{n5}}
-\rput(38,39){\rnode{a1}{\blue $\langle 1,\bot \rangle$}}
-\rput(38,31){\rnode{a2}{\blue $\langle 1,\bot \rangle$}}
-
-
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(39,20){\rnode{a}{n6}}
-\rput(38,24){\rnode{a1}{\blue $\langle 1,\bot \rangle$}}
-\rput(38,16){\rnode{a2}{\blue $\langle 1,\bot \rangle$}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
-		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-		
-\end{pspicture}
-\caption[Motivating example]{Constant propagation analysis}
-   \label{fig:working_example1}
-\end{figure}
-
-\begin{table}[H]
-  \begin{center}
-     % \label{tab:Pxy}
-    \begin{tabular}{c c c c c}
-    \hline
-        Nodes & \multicolumn{2}{c}{Initialization} &\multicolumn{2}{c}{Final values} \\
-    \hline
-      Node & IN & OUT & IN & OUT \\
-    \midrule
-   	  1. & $\langle \top, \top \rangle$ & $\langle \top, \top\rangle$ & $\langle \top, \top \rangle$ &$\langle 1,2 \rangle$ \\
-    \midrule
-   	  2.& $\langle \top, \top \rangle$ & $\langle \top, \top \rangle$ & $\langle 1, \bot \rangle$ & $\langle 1,\bot \rangle$ \\
-   	\midrule
-   	  3. & $\langle \top, \top \rangle$ & $\langle \top, \top \rangle$ & $\langle 1,\bot \rangle$ & $\langle 1,1 \rangle$\\
-   	\midrule
-   	  4. & $\langle \top, \top \rangle$ & $\langle \top, \top \rangle$ & $\langle 1, \bot \rangle$& $\langle 1,\bot \rangle$\\
-	\midrule
-   	  5. & $\langle \top, \top \rangle$ & $\langle \top, \top \rangle$ &$\langle 1, \bot  \rangle$ & $\langle 1, \bot \rangle$ \\
-   	\midrule
-   	  6. & $\langle \top, \top \rangle$ & $\langle \top, \top \rangle$ &$\langle 1, \bot  \rangle$ & $\langle 1, \bot \rangle$  \\
-   	
-      
-      \bottomrule 
-    \end{tabular}
-    \caption{Initial Constant propagation for CFG in Fig~\ref{fig:working_example1}}
-      \label{tab:Initial_constant_propagation_motivating}
-  \end{center}
-\end{table}
-
-Suppose due to some program change, expression at node $n3$ has been removed.
-Following are the steps for doing incremental analysis in constant propagation:
-\begin{itemize}
- \item Detecting self-sustainable values:
-  To detect self-sustainable values, primarily we need to do reaching defination analysis as shown in figure~\ref{fig:detecting_loop}.
- The definition of variable $b$, which was defined in the changed node, is reaching to the IN of that node itself as shown in figure~\ref{fig:detecting_loop}. Therefore,
- variable $b$ is a self-sustainable value and hence we need to create an affected region.
-
-\item Identify affected region and initialize program points in affected region to $\top$:
-Affected region is $\langle n3,n5,n2,n4,n6\rangle$ and initialize each program point in affected region as shown in figure~\ref{fig:working_example2}
-
-\item Identify boundary nodes:
-Boundary nodes are those where some information are coming from an unaffected region and we need to consider those information to compute the data flow values. 
-In Fig~\ref{fig:working_example1}, n2 is a boundary node.
-
-\item Computing values at the boundary node and propagating them:
-At \textit{OUT}$_1$ $b=2$ and at \textit{OUT}$_5$ $b=\top$, hence b becomes 2 at the IN of $n2$. Propagating this change to the affected region as shown in figure~\ref{fig:working_example3} 
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,10)(100,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{50}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$,$b=2$}}
-\rput(35,80){\rnode{a}{n1}}
-\rput(33,84){\rnode{a1}{\blue $\langle \bot,\bot \rangle$}}
-\rput(33,76){\rnode{a2}{\blue $\langle 1,2 \rangle$}}
-
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
-\rput(37,65){\rnode{a}{n2}}
-\rput(36,70){\rnode{a1}{\red $\langle 1,\top \rangle$}}
-\rput(36,61){\rnode{a2}{\red $\langle 1,\top \rangle$}}
-
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(20,50){\rnode{a}{n3}}
-\rput(20,55){\rnode{a1}{\red $\langle 1,\top \rangle$}}
-\rput(20,45){\rnode{a2}{\red $\langle 1,\top \rangle$}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(57,50){\rnode{a}{n4}}
-\rput(73,55){\rnode{a1}{\red $\langle 1,\top \rangle$}}
-\rput(73,45){\rnode{a2}{\red $\langle 1,\top \rangle$}}
-
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{n5}}
-\rput(38,39){\rnode{a1}{\red $\langle 1,\top \rangle$}}
-\rput(38,31){\rnode{a2}{\red $\langle 1,\top \rangle$}}
-
-
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(39,20){\rnode{a}{n6}}
-\rput(38,24){\rnode{a1}{\red $\langle 1,\bot \rangle$}}
-\rput(38,16){\rnode{a2}{\red $\langle 1,\bot \rangle$}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
-		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-		
-\end{pspicture}
-\caption[Motivating example2]{Constant propagation analysis}
-   \label{fig:working_example2}
-\end{figure}
-
-
-
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,10)(100,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{50}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$,$b=2$}}
-\rput(35,80){\rnode{a}{n1}}
-\rput(33,84){\rnode{a1}{\blue $\langle \bot,\bot \rangle$}}
-\rput(33,76){\rnode{a2}{\blue $\langle 1,2 \rangle$}}
-
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
-\rput(37,65){\rnode{a}{n2}}
-\rput(36,70){\rnode{a1}{\red $\langle 1,2 \rangle$}}
-\rput(36,61){\rnode{a2}{\red $\langle 1,2 \rangle$}}
-
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(20,50){\rnode{a}{n3}}
-\rput(20,55){\rnode{a1}{\red $\langle 1,2 \rangle$}}
-\rput(20,45){\rnode{a2}{\red $\langle 1,2 \rangle$}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(57,50){\rnode{a}{n4}}
-\rput(73,55){\rnode{a1}{\red $\langle 1,2 \rangle$}}
-\rput(73,45){\rnode{a2}{\red $\langle 1,2 \rangle$}}
-
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{n5}}
-\rput(38,39){\rnode{a1}{\red $\langle 1,2 \rangle$}}
-\rput(38,31){\rnode{a2}{\red $\langle 1,2 \rangle$}}
-
-
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(39,20){\rnode{a}{n6}}
-\rput(38,24){\rnode{a1}{\red $\langle 1,2 \rangle$}}
-\rput(38,16){\rnode{a2}{\red $\langle 1,2 \rangle$}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
-		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-		
-\end{pspicture}
-\caption[Motivating example3]{Final values after doing incremental constant propagation analysis}
-   \label{fig:working_example3}
-\end{figure}
+As an example, consider figure~\ref{fig:incr_non-bit1}. The node $n4$ is a changed node.
+The expression \emph{\textbf{b=2}} in the Changed Node $n4$, is called the changed expression.
+As per the criteria defined above, for the node $n3$ to be a meet node, the variable $b$ should not be 
+re-assigned in the path from $n4$ to $N$ and vice versa.
 \end{itemize}
-\end{comment}
+
+Given a changed node $N$, the detection process proceeds as follows
+\begin{enumerate}
+ \item If the IN information of $N$ is not TOP, proceed to step 2, otherwise proceed to step 5.
+ \item If a Meet Node, $M$, exists, proceed to step 3, otherwise proceed to step 5.
+ \item Let $INInfo \gets$ Information at IN of $M$ excluding Infomation coming from $N$. If $INInfo \ne \bot$, proceed to step 4.
+ otherwise proceed to step 5.
+ \item Create Affected Region.
+ \item Affected Region Need Not be Created.
+ \end{enumerate}
+ 
+
+
 
 
 
 \section{Summary}
-When program undergoes changes, data flow values computed earlier become invalid. Updating the data flow information to incorporate the effect of changes by repeating
-an exhaustive analysis can be very cost inefficient since it may compute redundant values. So incremental data flow analysis is used, which modifies only the data flow
-information of a program that has been affected by the change rather than recomputing entire data flow information of the program. It is more cost effective than an 
-exhaustive analysis.
+When a program undergoes changes, data flow values computed earlier become invalid. Updating the data flow information to incorporate the effect
+of changes by repeating an exhaustive analysis can be cost inefficient since it may compute redundant values. So incremental data flow analysis
+is used, which modifies only the data flow information of the program that has been affected by the change rather than recomputing entire data flow
+information of the program is more cost effective.
 
-In Bit-vector framework, due to program change the data flow value may change either from top to bottom or bottom to top. Top to bottom change can be incorporated by directly
-propagating the values to its neighbors. But for bottom to top change, we need to create an affected region to incorporate the change to its neighbors.
+In Bit-vector framework, due to program change the data flow value may change either from top to bottom or bottom to top. Top to bottom change can
+be incorporated by directly propagating the values to the neighbors of the changed node. For bottom to top change, we need to create an affected 
+region to incorporate the change to the neighbors of the changed node.
 
-In Constant Propagation unlike bit-vector framework, we can avoid computing an affected region only when there is a change to bottom otherwise we need to create an affected region. 
-But bottom change is very infrequent and hence we will end up in creating an affected region for almost all the cases. Bottom values is also produced by the meet
-function, so it may be possible to restrict the size of affected region even if we are unable to avoid it. We need some method to restrict the size of the affected
-region which will be a part of our future work.
-
-The method described in this chapter performs incremental analysis for a single change in a program. In general multiple changes in a program is also possible,
-so we need a method which can also perform incremental analysis for multiple changes in a program.
-
+In constant propagation, the IN information of a changed node may depend on the OUT information. Thus, we cannot directly propagate
+the IN information to its neighboring nodes without attracting the possibility of dispersing incorrect information. In such cases, we need to create an affected region.
 
 
 \begin{comment} 
