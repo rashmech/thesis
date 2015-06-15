@@ -34,16 +34,16 @@
 %\begin{comment}
 \begin{abstract}
 
-When a program undergoes changes during development, updating the data flow information by doing exhaustive analysis is cost 
-inefficient. In such cases, incremental data flow analysis, which modifies only those data flow information of a program that has
-been changed, can be used. The savings made from avoiding the recomputation of the entire data flow information of a program can be
-significant. The incremental analysis methods are known for bit-vector framework.
-However, these methods are not directly applicable to non bit-vector framework. 
-This report presents some challenges involved in doing incremental analysis for non bit-vector framework, and proposes several solutions towards the same.
+When a program undergoes changes during development, updating the
+data flow information by doing exhaustive analysis is cost inefficient. In such cases,
+\textit{surgically} modifying the data flow information of the changed portion of the program, while avoiding recomputation of the entire 
+data flow can lead to significant savings.
 
-This report also describes PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC). 
-We present \textit{Incremental Solver}, an enhanced version of the PRISM solver with the added capabilities 
-of context sensitive incremental analysis. We discuss the changes made and the challenges faced in detail.
+We first describe PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC).
+We next present the enhancements done to the PRISM solver to add the capabilities of incremental analysis, elaborating on the challenges faced and the changes made. 
+Such incremental analysis methods are well studied for bit-vector framework. 
+However, these methods are not directly applicable to non bit-vector framework. 
+This report also presents some challenges involved and possible solutions for doing incremental analysis for non bit-vector framework.
 
 \end{abstract}
 %\end{comment}
@@ -905,13 +905,13 @@ The following two kinds of changes may take place:
  expression from the program. Such a change needs to be processed using an exhaustive analysis.
  \item Changes in the graph. \newline
  Consider an edge $e = (i,j)$. Let u $\equiv$ OUT$_i$ and v $\equiv$ IN$_j$,
- two flow functions $h(u,v)$ and $h(v,u)$ are associated with an edge e.
+ two flow functions $h(u,v)$ and $h'(v,u)$ are associated with an edge e.
  \begin{itemize}
   \item Deletion of an edge: \newline
-  Deleting an edge $e$ will delete functions $h(u,v)$ and $h(v,u)$. We know that a non-existant function is a constant function $\top$. Thus, some functions
+  Deleting an edge $e$ will delete functions $h(u,v)$ and $h'(v,u)$. We know that a non-existant function is a constant function $\top$. Thus, some functions
   may change to $\top$ which is a Bottom to Top change.
   \item Insertion of an edge:\newline
-  Inserting an edge $e$ will add two new functions $h(u,v)$ and $h(v,u)$ which is a Top to Bottom change.
+  Inserting an edge $e$ will add two new functions $h(u,v)$ and $h'(v,u)$ which is a Top to Bottom change.
   \item Deletion of a node: \newline
   Deletion of a node involves both Top to Bottom and Bottom to Top changes as illustrated in figure \ref{fig:delnodexample}.
   The deletion of the node $k$ starts with the removal of edges $e1 = (i, k)$ and $e2 = (k, j)$, a Bottom to Top change. 
@@ -925,10 +925,10 @@ The following two kinds of changes may take place:
 \putnode{n1}{origin}{50}{80}{%
 	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
 	       \rput(40,80){\rnode{a}{$i$}}
-	       \rput(45, 75){\rnode{a}{$u$}}
-	       \rput(45, 70){\rnode{a}{$k_1$}}
-	       \rput(45, 60){\rnode{a}{$k_2$}}
-	       \rput(45, 55){\rnode{a}{$v$}}
+% 	       \rput(45, 75){\rnode{a}{$u$}}
+% 	       \rput(45, 70){\rnode{a}{$k_1$}}
+% 	       \rput(45, 60){\rnode{a}{$k_2$}}
+% 	       \rput(45, 55){\rnode{a}{$v$}}
 \putnode{n2}{n1}{0}{-15}{%
 	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
 	        \rput(40,65){\rnode{b}{$k$}}
@@ -960,10 +960,10 @@ The following two kinds of changes may take place:
 \putnode{n1}{origin}{50}{80}{%
 	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
 	       \rput(40,80){\rnode{a}{$i$}}
-	       \rput(45, 75){\rnode{a}{$u$}}
-	       \rput(45, 70){\rnode{a}{$k_1$}}
-	       \rput(45, 60){\rnode{a}{$k_2$}}
-	       \rput(45, 55){\rnode{a}{$v$}}
+% 	       \rput(45, 75){\rnode{a}{$u$}}
+% 	       \rput(45, 70){\rnode{a}{$k_1$}}
+% 	       \rput(45, 60){\rnode{a}{$k_2$}}
+% 	       \rput(45, 55){\rnode{a}{$v$}}
 \putnode{n2}{n1}{0}{-15}{%
 	       \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
 	        \rput(40,65){\rnode{b}{$k$}}
@@ -993,8 +993,8 @@ Control flow graph will change due to the following:
  \end{itemize}
  \end{comment}
  
- For adding a node/edge, we need not create an affected region since the effect of adding a node/edge will always go down the graph.
- Otherwise, we need to create an affected region.
+%  For adding a node/edge, we need not create an affected region since the effect of adding a node/edge will always go down the graph.
+%  Otherwise, we need to create an affected region.
 
 \subsection{Validation}
 We can validate the results of incremental analysis by comparing it with the result of exhaustive analysis. 
@@ -1011,11 +1011,11 @@ affected region then in the worst case it requires \textit{O(m)} time to identif
 One approach~\cite{inc1} is based on Context Free Language(CFG) reachability for incremental analysis of context-sensitive points-to analysis. It traces the CFL-reachable
 paths which was traversed during computation of points-to sets to precisely identify and recompute the affected points-to sets when the program changes made. 
 
-Another approach~\cite{inc2} is to first compare the old and new code version and generates a structural diff. This diff will give information about which nodes and edges in the 
-program's inter-procedural control-flow graph (ICFG) were added or removed. Then we will call all nodes that were added or removed as \textit{changed} nodes and infer from
-all the changed the set of \textit{affected} nodes. Affected nodes are all nodes which are reachable from changed nodes which is an over approximation.
-Then it follows a clear-and-propagate strategy: for each affected node it first clears the analysis information computed and then re-propagates the information from
-all the node’s predecessors. Basically affected region is created always.
+Another approach~\cite{inc2}, generates a structural difference between the old and new code version, called as \textit{diff}. The \textit{diff} 
+provides an information of added and removed nodes/edges from the inter-procedural control-flow graph(ICFG). Added or removed nodes are called as
+\textit{changed} nodes. The set of \textit{affected} nodes will contains all the nodes which are reachable from the \textit{changed} nodes(which is an over approximation). The set of \textit{affected} nodes are inferred from the set of \textit{changed} node. 
+This is followed by a clear-and-propagate strategy: for each affected node, it clears the  computed information
+and then re-propagates the information from all the node’s predecessors. Basically, it creates an affected region for all kind of changes.
 
 
 \section{Incremental Analysis in Constant Propagation analysis}
