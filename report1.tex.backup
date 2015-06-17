@@ -1862,12 +1862,32 @@ the lattice of the data flow problem
 \end{itemize}
 
 \section{Incremental solver}
-In this section, we describe the implementation of Incremental Solver. First we explained the architecture of the solver which is followed by implementation details. 
+In this section, we describe the implementation of Incremental Solver. It is divided into following three parts:
+\begin{itemize}
+ \item Preprocessing
+ \item Computing data flow information
+ \item Update
+\end{itemize}
+
+\begin{itemize}
+\item \textbf{Preprocessing} It detects changed program point by comparing old and new Ir. It detects affected region,  a set of affected nodes and a set
+of affected boundary nodes.
+
+\item \textbf{Calculating data flow information}
+The solver computes data flow information only for the affected region. For each boundary node, it computes the data flow information and propagates
+them to its neighboring nodes.
+
+\item \textbf{Update} Merges the computed information for the affected region with the old information.
+
+\end{itemize}
+
+
 \subsection{Architecture of Incremental Solver}
-Figure~\ref{fig:Architectur_incrementalPrism} shows an architecture of Incremental Solver.The \textit{Changed Node Detector} takes \textit{Old IR} and \textit{New IR} as inputs.
-It compares two IRs and detects the changed nodes. Output of  the \textit{Changed Node Detector} is then passed to  the \textit{Preprocessor}. The \textit{Preprocessor} computes 
-the affected region, a set of affected nodes, and a set of boundary nodes. The \textit{Solver} computes the data flow information for the affected region and passes the results
-to the \textit{Merger}. \textit{Merger} will merge the solution and produce updated results. 
+Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Changed Node Detector}
+takes \textit{Old IR} and \textit{New IR} as inputs. It compares the two IRs and detects the changed nodes. 
+Output of the \textit{Changed Node Detector} is then passed to the \textit{Preprocessor}. The \textit{Preprocessor} computes 
+the affected region, a set of affected nodes, and a set of boundary nodes. The \textit{Solver} computes the data flow information
+for the affected region and passes the results to the \textit{Merger}. \textit{Merger} merges the solution and produces the updated results. 
 
 \begin{figure}[H]
 \centering
@@ -1932,12 +1952,37 @@ to the \textit{Merger}. \textit{Merger} will merge the solution and produce upda
 \subsection{Modules of Incremental Solver}
 The core PRISM solver was extended to support Incremental data flow analysis. Following modules are the extensions to the PRISM solver.
 \begin{itemize}
- \item incremental Driver :
- \item CreateAffectedRegion:
- \item OldIRNode:
- \item OldIRWorklist:
- \item NEWIRNode:
+ \item \texttt{IncrementalDriver}: This module takes two IRs as an input and calls \texttt{FLA$<$queryname$>$Client} to initiate the analysis.
+ \item \texttt{FLA$<$queryname$>$Client}: This module stores old IR information into \texttt{OldIRNode} and initiate incremental analysis of new IR.
+ \item \texttt{CreateAffectedRegion}: This module detects the change in the control flow graph. It also detects affected region and a set of boundary nodes.
+ The API functions which detects affected region and boundary nodes are as follows:
+ \begin{itemize}
+  \item \texttt{detectChangedNode(Application app)}: It compares old and new IRs and detect the changed nodes(or program points).
+  \item \texttt{RDef$\_$affectednodes()}: It detects affected region for reaching definition analysis. Different analysis will have different method of computing affected region. 
+  \item \texttt{findBoundaryNodesForwardAnalysis}: It detects boundary nodes for forward analysis. 
+   \end{itemize}
+ \item \texttt{OldIRWorklist}: This modules stores a list of old IR nodes.
 \end{itemize}
+
+% \subsection{Data Structures used by PRISM solver}
+% In this section, we describe the data structures used in the implementation of incremental analysis. Following are the data structure used:
+% \begin{itemize}
+% 
+%  \item oldIRnode: It stores old IR node information
+%  \
+% \end{itemize}
+\section{Implemented Incremental Reaching Definition Analysis}
+We implemented context sensitive incremental reaching definition analusis. The implementatiojn
+consists of following parts:
+\begin{itemize}
+ \item \textbf{Node flow functions and Meet functions} Node flow functions consists of flow functions for 
+ each statement type.  they are specified in the Kulang specification. 
+ \item \textbf{Interprocedural flow functions} Since Kulang does not currently support specification for inter-procedural
+ analysis, they are implemented in java.
+ 
+\end{itemize}
+
+
 
 
 
