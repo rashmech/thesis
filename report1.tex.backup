@@ -1972,16 +1972,34 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \
 % \end{itemize}
 \section{Implemented Incremental Reaching Definition Analysis}
-We implemented context sensitive incremental reaching definition analusis. The implementatiojn
+We implemented context sensitive incremental reaching definition analysis. The implementation
 consists of following parts:
 \begin{itemize}
  \item \textbf{Node flow functions and Meet functions} Node flow functions consists of flow functions for 
  each statement type.  they are specified in the Kulang specification. 
- \item \textbf{Interprocedural flow functions} Since Kulang does not currently support specification for inter-procedural
+ \item \textbf{Inter-procedural flow functions} Since Kulang does not currently support specification for inter-procedural
  analysis, they are implemented in java.
- 
+ \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
+ analysis. Creation of affected region will be different for different analysis.
 \end{itemize}
 
+
+\section{Issues in Implementing Incremental Analysis}
+
+\begin{itemize}
+ \item \textbf{Reading two IRs} The old solvers reads only single IR, but for incremental analysis we need both old nad new IR for comparison.
+ For this, we change the driver to take the two IRs and discard the old IR after storing the old IR node information.
+ \item Old solver output the results in a text file. For incremental update, we need old solution. 
+ But reading information from a text file will cause loss of some information. This is because re-creating all the abstractions from the text output
+ is not possible owing to lack of source code that performed the serialization in the first place.
+\end{itemize}
+
+\section{Assumptions}
+\begin{itemize}
+\item We assume that there is no structural change in the graph.
+\item pointer information will remain same,
+\item there is no change in the context information.
+\end{itemize}
 
 
 
@@ -1990,6 +2008,191 @@ consists of following parts:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental Analysis in General framework}
+The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
+In this chapter, we will discuss some of the issues in extending the existing Incremental 
+Analysis to a general framework by means of constant propagation analysis.
+\section{Issues in incremental analysis in general framework}
+Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
+the change to its neighboring nodes since it may depend on the OUT information of the node.
+We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
+then according to existing incremental analysis, this is a change to bottom and we can directly propagate
+the change to its neighboring nodes. However, this is not the case. 
+The information at the IN of node 4 is bottom because of the expression $b=2$ in node 4.
+If we will propagate $\bot$ to neighboring nodes, it will give incorrect results.
+Unlike bit-vector framework, we may need to create an affected region even if there is a change to bottom.
+Thus, the solution is to create an affected region for all kind of changes.
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,20)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n1}{origin}{40}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(30,80){\rnode{a}{n1}}
+\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n2}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(69,80){\rnode{b}{n2}}
+\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n3}{n1}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,65){\rnode{c}{n3}}
+\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n4}{n1}{20}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
+\rput(49,50){\rnode{a}{n4}}
+\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+\putnode{n5}{n1}{20}{-45}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,35){\rnode{a}{n5}}
+\rput(47,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
+\rput(47,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-15,
+                linearc=0.5,offsetA=1, offsetB=1]{->}{n5}{n3}
+
+\end{pspicture}
+\caption{Constant propagation analysis}
+   \label{fig:incr_non-bit1}
+\end{figure}
+
+
+
+\section{General Optimization in the size of Affected Region}
+Let us consider the example in figure~\ref{fig:incr_non-bit2}.
+Let the changed node be $n5$. The affected region (AR) will contain the nodes $n5, n6, n7, n3$ and $n4$ with the node 
+ $n3$ as the boundary node. The information coming from nodes $n1$ and $n2$ will keep the value at the IN of $n3 = \bot$.
+The information coming from $OUT$ of $n7$ will not affect the $IN$ information of $n3$, and thus the information of the successors of $n3$.
+This implies that we can exclude the node $n3$, and thus its successor $n4$ from the affected region, reducing the size of the latter.
+We further note that the node $n3$ must be a dominance frontier of the change node ($n4$).
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n1}{origin}{40}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
+\rput(30,80){\rnode{a}{n1}}
+\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n2}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=1$}}
+\rput(69,80){\rnode{b}{n2}}
+\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n3}{n1}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,65){\rnode{c}{n3}}
+\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n4}{n1}{20}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,50){\rnode{a}{n4}}
+\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n5}{n1}{20}{-45}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(49,35){\rnode{a}{n5}}
+\rput(47,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(47,30){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,20){\rnode{c}{n6}}
+\rput(47,23){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(47,16){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+      
+\putnode{n7}{n6}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(49,5){\rnode{c}{n7}}
+\rput(47,8){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(47,1){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncline{->}{n6}{n7}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-15,
+                linearc=0.5,offsetA=1, offsetB=1]{->}{n7}{n3}
+
+\end{pspicture}
+\caption{Constant propagation analysis}
+   \label{fig:incr_non-bit2}
+\end{figure}
+
+Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
+then $n$ must be a boundary node. But if some node $n$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
+We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = < i, j, l, m>$
+Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
+
+\begin{figure}[!htb]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(100,90)
+%%\psframe(0,0)(100,90)
+\putnode{n1}{origin}{50}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ $a=$}}
+\rput(40,80){\rnode{a}{i}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$if(e)$}}
+\rput(40,65){\rnode{a}{j}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$a=2$}}
+\rput(20,50){\rnode{a}{k}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
+\rput(57,50){\rnode{a}{l}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(40,35){\rnode{a}{m}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(37,20){\rnode{a}{n6}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+% \ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
+% 		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+		
+\end{pspicture}
+\caption{Control flow graph for constant propagation analysis}
+   \label{fig:eg_dominance_frontier}
+\end{figure}
+
+
+Therefore, it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
+All such nodes have an outside influence. If hte outside influence keeps the value to $\bot$ (or does not allow it to change), 
+then there is no need to include this node in AR. This can help in reducing the size of AR.
+In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region.
+
 \begin{comment}
 \section{Incremental Analysis in Non Bit-vector Framework}
 \begin{figure}[H]
