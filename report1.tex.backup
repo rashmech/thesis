@@ -1839,41 +1839,36 @@ Following are generated .java files:
 
 
 \subsection{Modules of Bi-directional Solver}
-Following modules are used in bi-directional Solver.
+Following modules are used in the bi-directional Solver.
 \begin{itemize}
- \item DFStore: It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
- \item ValueContexts: It stores information about contexts formed during analysis.
- \item ContextTransition: It stores context transition graph which is a method of representing call strings.
- \item DFSolverLogger: This module provides utilities for logging, measuring performance parameters of the core solver.
- \item InterproceduralWorklist: This module manages work list and applies a priority scheme to the work list.
+ \item \textbf{DFStore:} It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
+ \item \textbf{ValueContexts:} It stores information about contexts formed during analysis.
+ \item \textbf{ContextTransition:} It stores context transition graph which is a method of representing call strings.
+ \item \textbf{DFSolverLogger:} This module provides utilities for logging, measuring performance parameters of the core solver.
+ \item \textbf{InterproceduralWorklist:} This module manages work list and applies a priority scheme to the work list.
 \end{itemize}
 
-More details about these modules are presented in Appendix.
+More details about these modules are presented in the Appendix.
 
-\subsection{Limitations}
-Following are some of the limitations :
+\subsection{Limitations of Bi-directional Solver}
+Following are some of the limitations of the Bi-directional solver:
 \begin{itemize}
  \item It does not support Incremental data flow analysis.
  \item It outputs the results in a text file. 
  \item Meet function needs to be explicitly specified in kulang specifications. The meet function can be inferred from
-the lattice of the data flow problem
-\item There is no proper way to debug the kulang specifications
- \item Very hard to understand the specification language
+the lattice of the data flow problem.
+ \item There is no proper way to debug the kulang specifications.
+ \item The specification language is not very intuitive and has a steep learning curve.
 \end{itemize}
 
 \section{Incremental solver}
-In this section, we describe the implementation of Incremental Solver. It is divided into following three parts:
-\begin{itemize}
- \item Preprocessing
- \item Computing data flow information
- \item Update
-\end{itemize}
+In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
 
 \begin{itemize}
 \item \textbf{Preprocessing} It detects changed program point by comparing old and new Ir. It detects affected region,  a set of affected nodes and a set
 of affected boundary nodes.
 
-\item \textbf{Calculating data flow information}
+\item \textbf{Computing data flow information}
 The solver computes data flow information only for the affected region. For each boundary node, it computes the data flow information and propagates
 them to its neighboring nodes.
 
@@ -1975,12 +1970,13 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 We implemented context sensitive incremental reaching definition analysis. The implementation
 consists of following parts:
 \begin{itemize}
- \item \textbf{Node flow functions and Meet functions} Node flow functions consists of flow functions for 
- each statement type.  they are specified in the Kulang specification. 
- \item \textbf{Inter-procedural flow functions} Since Kulang does not currently support specification for inter-procedural
- analysis, they are implemented in java.
+ \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
+ each statement.  It is specified in the Kulang specification. 
+ \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
+ \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
+ Since Kulang does not currently support specification for inter-procedural analysis, they are implemented in java.
  \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
- analysis. Creation of affected region will be different for different analysis.
+ analysis. Creation of affected region depends on the kind of analysis, and thus needs to be crafted on a case to case basis.
 \end{itemize}
 
 
@@ -2071,6 +2067,12 @@ Thus, the solution is to create an affected region for all kind of changes.
 
 
 \section{General Optimization in the size of Affected Region}
+We present the outline of optimizing the size of the affected region in the general case.
+We first establish via an example that all the possible candidates of removal form a dominance frontier.
+We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
+Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
+construction itself, without further delays.
+\paragraph{Possible Removal Candidates Form a Dominance Frontier}
 Let us consider the example in figure~\ref{fig:incr_non-bit2}.
 Let the changed node be $n5$. The affected region (AR) will contain the nodes $n5, n6, n7, n3$ and $n4$ with the node 
  $n3$ as the boundary node. The information coming from nodes $n1$ and $n2$ will keep the value at the IN of $n3 = \bot$.
@@ -2139,9 +2141,10 @@ We further note that the node $n3$ must be a dominance frontier of the change no
    \label{fig:incr_non-bit2}
 \end{figure}
 
+\paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
 Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
-then $n$ must be a boundary node. But if some node $n$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
-We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = < i, j, l, m>$
+then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
+We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
 Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
 
 \begin{figure}[!htb]
@@ -2163,7 +2166,7 @@ Here $m$ is a boundary node but it is dominated by block $i$ and hence not its d
 
 \putnode{n4}{n2}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(57,50){\rnode{a}{l}}
+\rput(60,50){\rnode{a}{l}}
 
 \putnode{n5}{n2}{0}{-30}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
@@ -2171,7 +2174,7 @@ Here $m$ is a boundary node but it is dominated by block $i$ and hence not its d
 
 \putnode{n6}{n5}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(37,20){\rnode{a}{n6}}
+\rput(40,20){\rnode{a}{n}}
 
 \ncline{->}{n1}{n2}
 \ncline{->}{n2}{n3}
@@ -2188,8 +2191,8 @@ Here $m$ is a boundary node but it is dominated by block $i$ and hence not its d
 \end{figure}
 
 
-Therefore, it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
-All such nodes have an outside influence. If hte outside influence keeps the value to $\bot$ (or does not allow it to change), 
+It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
+All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
 In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region.
 

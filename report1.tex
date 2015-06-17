@@ -1848,32 +1848,27 @@ Following modules are used in the bi-directional Solver.
  \item \textbf{InterproceduralWorklist:} This module manages work list and applies a priority scheme to the work list.
 \end{itemize}
 
-More details about these modules are presented in Appendix.
+More details about these modules are presented in the Appendix.
 
-\subsection{Limitations}
-Following are some of the limitations :
+\subsection{Limitations of Bi-directional Solver}
+Following are some of the limitations of the Bi-directional solver:
 \begin{itemize}
  \item It does not support Incremental data flow analysis.
  \item It outputs the results in a text file. 
  \item Meet function needs to be explicitly specified in kulang specifications. The meet function can be inferred from
-the lattice of the data flow problem
-\item There is no proper way to debug the kulang specifications
- \item Very hard to understand the specification language
+the lattice of the data flow problem.
+ \item There is no proper way to debug the kulang specifications.
+ \item The specification language is not very intuitive and has a steep learning curve.
 \end{itemize}
 
 \section{Incremental solver}
-In this section, we describe the implementation of Incremental Solver. It is divided into following three parts:
-\begin{itemize}
- \item Preprocessing
- \item Computing data flow information
- \item Update
-\end{itemize}
+In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
 
 \begin{itemize}
-\item \textbf{Preprocessing} It detects changed program point by comparing old and new Ir. It detects affected region,  a set of affected nodes and a set
+\item \textbf{Preprocessing} It detects changed program point by comparing old and new IR. It detects affected region,  a set of affected nodes and a set
 of affected boundary nodes.
 
-\item \textbf{Calculating data flow information}
+\item \textbf{Computing data flow information}
 The solver computes data flow information only for the affected region. For each boundary node, it computes the data flow information and propagates
 them to its neighboring nodes.
 
@@ -1975,30 +1970,31 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 We implemented context sensitive incremental reaching definition analysis. The implementation
 consists of following parts:
 \begin{itemize}
- \item \textbf{Node flow functions and Meet functions} Node flow functions consists of flow functions for 
- each statement type.  they are specified in the Kulang specification. 
- \item \textbf{Inter-procedural flow functions} Since Kulang does not currently support specification for inter-procedural
- analysis, they are implemented in java.
+ \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
+ each statement.  It is specified in the Kulang specification. 
+ \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
+ \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
+ Since Kulang does not currently support specification for inter-procedural analysis, they are implemented in java.
  \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
- analysis. Creation of affected region will be different for different analysis.
+ analysis. The affected region creation algorithm, and hence the implementation depend on the kind of analysis.
 \end{itemize}
 
 
 \section{Issues in Implementing Incremental Analysis}
-
 \begin{itemize}
- \item \textbf{Reading two IRs} The old solvers reads only single IR, but for incremental analysis we need both old nad new IR for comparison.
+ \item \textbf{Reading two IRs} The old solvers reads only a single IR. However, for incremental analysis we need both the old and new IR for comparison.
  For this, we change the driver to take the two IRs and discard the old IR after storing the old IR node information.
- \item Old solver output the results in a text file. For incremental update, we need old solution. 
- But reading information from a text file will cause loss of some information. This is because re-creating all the abstractions from the text output
- is not possible owing to lack of source code that performed the serialization in the first place.
+ \item Old solver output the results in a text file. For incremental update, we need to access the old solution of the program whose incremental analysis has to be done. 
+ However, re-creating all the abstractions from the text output is not possible owing to lack of source code that performed the serialization in the first place.
+ This thus involves some inherent loss of information.
 \end{itemize}
 
 \section{Assumptions}
+The assumptions that we make are as follows:
 \begin{itemize}
-\item We assume that there is no structural change in the graph.
-\item pointer information will remain same,
-\item there is no change in the context information.
+\item There is no structural change in the graph.
+\item Pointer information will remain same,
+\item There is no change in the context information.
 \end{itemize}
 
 
