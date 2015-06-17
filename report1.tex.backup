@@ -1864,9 +1864,80 @@ the lattice of the data flow problem
 \section{Incremental solver}
 In this section, we describe the implementation of Incremental Solver. First we explained the architecture of the solver which is followed by implementation details. 
 \subsection{Architecture of Incremental Solver}
-Figure~\ref{} shows an architecture of Incremental Solver.
+Figure~\ref{fig:Architectur_incrementalPrism} shows an architecture of Incremental Solver.The \textit{Changed Node Detector} takes \textit{Old IR} and \textit{New IR} as inputs.
+It compares two IRs and detects the changed nodes. Output of  the \textit{Changed Node Detector} is then passed to  the \textit{Preprocessor}. The \textit{Preprocessor} computes 
+the affected region, a set of affected nodes, and a set of boundary nodes. The \textit{Solver} computes the data flow information for the affected region and passes the results
+to the \textit{Merger}. \textit{Merger} will merge the solution and produce updated results. 
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(-20,-20)(115,90)
+
+\begin{psframe}(-20,-20)(115,90)
+\putnode{n1}{origin}{0}{80}{%
+	  {\textbf{Old IR}}
+     }
+  
+\putnode{n2}{n1}{40}{-5}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Changed Node Detector}}
+     
+\putnode{n3}{n1}{0}{-10}{%
+	  {\textbf{New IR}}
+     }
+\putnode{n4}{n2}{50}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Preprocessor}}
+     
+\putnode{n5}{n4}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Solver}}
+
+\putnode{n6}{n5}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Merger}}
+\putnode{n13}{n6}{-30}{0}{%
+     {\textbf{Old Solution}}}
+     
+\putnode{n7}{n6}{0}{-20}{%
+	  {\textbf{Updated Results}}
+     }
+
+\putnode{n8}{n5}{-56}{15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Generated Files by Kulang Compiler}}
+\putnode{n11}{n8}{33}{0}
+
+\putnode{n9}{n5}{-40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Utility functions}}
+
+\putnode{n10}{n5}{-45}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Data flow Analysis API}}
+\putnode{n12}{n10}{22}{0}
 
 
+\ncline{->}{n1}{n2}
+\ncline{->}{n3}{n2}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncline{->}{n6}{n7}
+\ncline{->}{n11}{n5}
+\ncline{->}{n9}{n5}
+\ncline{->}{n12}{n5}
+\ncline{->}{n13}{n6}
+\end{psframe}
+
+\end{pspicture}
+\caption{Architecture of Incremental PRISM}
+    \label{fig:Architectur_incrementalPrism}
+\end{figure}
+
+\subsection{Modules of Incremental Solver}
+The core PRISM solver was extended to support Incremental data flow analysis. Following modules are the extensions to the PRISM solver.
+\begin{itemize}
+ \item incremental Driver :
+ \item CreateAffectedRegion:
+ \item OldIRNode:
+ \item OldIRWorklist:
+ \item NEWIRNode:
+\end{itemize}
 
 
 
