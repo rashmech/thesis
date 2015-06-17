@@ -1,0 +1,52 @@
+\begin{thebibliography}{1}
+
+\bibitem{thesis_sir}
+Uday~P. Khedkar.
+\newblock {\em A Generalised Theory of Bit Vector Data Flow Analysi}.
+\newblock PhD thesis, Computer Science and Engineering, IIT Bombay, 1995.
+
+\bibitem{thesis_m}
+Mukta Joglekar.
+\newblock {\em Liveness based pointer analysis in prism}.
+\newblock Mtech dissertation, Computer Science and Engineering, IIT Bombay, 2013.
+
+\bibitem{thesis_v}
+Vinit Deodhar.
+\newblock {\em Bidirectional Context sensitive analysis framework in PRISM}.
+\newblock Mtech dissertation, Computer Science and Engineering, IIT Bombay, 2014.
+
+
+\bibitem{thesis_p}
+Pritam Gharat.
+\newblock {\em Interprocedural analysis in PRISM}.
+\newblock Mtech report (Stage 1), Computer Science and Engineering, IIT Bombay, 2012.
+
+\bibitem{prism}
+TATA Research Development and Design Center.
+\newblock {\em User Manual of Kulang}.
+
+\bibitem{node_listing}
+Steven S. Muchnick and Neil D. Jones
+\newblock {\em Program Flow analysis: Theory and Applications}.
+
+
+\bibitem{inc1}
+Yi Lu, Lei Shang, Xinwei Xie and Jingling Xue.
+\newblock {\em An incremental Points-to Analysis with CFL-Reachability}.
+\newblock {\em Programming Languages and Compilers Group School of Computer Science and Engineering University of New South Wales, Sydney, NSW 2052, Australia}.
+\newblock {\em {ylu,shangl,xinweix,jingling}@cse.unsw.edu.au, School of Computer Science National University of Defence Technology, Changsha 410073, China}.
+
+\bibitem{inc2}
+Steven Arzt  and Eric Bodden,
+\newblock {\em Efficiently updating IDE-based data-flow analyses in response to incremental program changes}.
+\newblock{\em Secure Software Engineering Group, European Center for Security and Privacy by Design (EC SPRIDE), Technische Universität Darmstadt, 2 Fraunhofer SIT Darmstadt, Germany}.
+
+\bibitem{thesis_r}
+Rashmi Rekha Mech.
+\newblock {\em Incremental Data Flow analysis}.
+\newblock Seminar Report, Computer Science and Engineering, IIT Bombay, 2014.
+
+
+
+
+\end{thebibliography}

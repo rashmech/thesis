@@ -38,7 +38,7 @@
 
 When a program undergoes changes during development, updating the
 data flow information by doing exhaustive analysis is cost inefficient. In such cases,
-surgically modifying the data flow information of the changed portion of the program, while avoiding recomputation of the entire 
+modifying the data flow information of the changed portion of the program, while avoiding recomputation of the entire 
 data flow can lead to significant savings.
 
 We first describe PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC).
@@ -75,7 +75,7 @@ For such changes, it is not desirable to recompute the information from scratch.
 leads to redundant computation of old values which is very inefficient. 
 
 For such changes, incremental data flow analysis can be used. It modifies only those data flow information which has been affected by 
-the change rather than recomputing entire data flow information. It is more cost-effective than an exhaustive analysis.
+the change rather than recomputing entire data flow information. Clearly, we expect this method to be more cost-effective than exhaustive analysis in general.
 
 
 
@@ -384,77 +384,12 @@ Therefore, incremental analysis is performed on the modified control flow graph 
    \label{fig:acr_app}
 \end{figure}
 
-\begin{comment}
-\section{PRISM Framework}
-PRISM is a program analyzer generator developed by Tata Research Development and Design Center (TRDDC). PRISM provides a platfrom 
-that is being used for generating various program analysis tools for documentation, reverse engineering, domain specific model checking etc.
-Various data flow analyses have been implemented using PRISM, such as Strongly Live-variable analysis, LFCPA, Copy Constant propagation,
-Liveness analysis etc.
-
-PRISM has two basic components, Kulang compiler and Solver. Kulang compiler parses analyzer specifications and
-generates some java classes. These classes are used by solver to solve data flow problem. It also uses many other packages which provide
-many utility functions.
-
-Figure~\ref{fig:Architectur_prism}~\cite{thesis_v} shows the architecture of PRISM. Source code is passed to the \textbf{IR Generator} which generates
-a language independent IR, which is then fed to \textbf{Generated analyzer}. Kulang compiler takes ``\textbf{.klg}'' file as an input and 
-generates \textbf{java} classes. Then \textbf{Generated analyzer} takes IR as an input, and produces desired output. More details are presented in Chapter 3.
-
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(-20,15)(100,80)
-\psframe(-35,15)(115,80)
-\putnode{n1}{origin}{60}{70}{%
-	  {\textbf{Program}}
-     }
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{IR Generator}}
-
-\putnode{n3}{n2}{0}{-10}{%
-     {\textbf{Generated IR}}}
-
-\putnode{n4}{n3}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Generated analyzer}}
-
-\putnode{n5}{n4}{40}{0}{{\textbf{Results}}}
-
-\putnode{n6}{n4}{-55}{0}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
-
-\putnode{n8}{n6}{0}{15}{%
-     {Copied}}
-% \rput(55,33){\rnode{a}{Generated}}
-\putnode{n7}{n6}{-30}{0}{%
-      {\textbf{.klg files}}}
-
-\putnode{n8}{n6}{-30}{10}{%
-    {\textbf{.java files}}}
-\putnode{n9}{n7}{56}{-3}{%
-     {Generated}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline[nodesepA=1]{->}{n3}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n6}{n4}
-\ncline{->}{n7}{n6}
-% \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
-\nccurve[angleA=10, angleB=150, ncurv=0.4]{->}{n8}{n4}
-     
-\end{pspicture}
-\caption[Architecture of PRISM]{Architecture of PRISM}
-   \label{fig:Architectur_prism}
-\end{figure}
-
-
-\end{comment}
 
 \section{Scope of the project}
 
-This project aims at providing support for incremental data flow analysis in PRISM which involves changing the solver. Old version of PRISM 
-(implemented by Vinit) performs both unidirectional and bi-directional context sensitive analysis. However, it doesn't perform incremental data flow analysis.
+This project aims at providing support for incremental data flow analysis in PRISM.
+Old version of PRISM~\cite{thesis_v} performs both unidirectional and bi-directional context sensitive analysis. 
+However, it doesn't perform incremental data flow analysis.
 
 This report explains the implemented incremental solver. It also presents some issues in implementing incremental data flow analysis for non-bit vector
 framework. It describes the implemented Liveness-based Inter-procedural Reaching Definition Analysis in PRISM.
@@ -562,7 +497,7 @@ In bit-vector analyis, following types of functions are possible.
 
 
 \label{sec:bit-vector}
-In bit-vector framework~\cite{thesis_sir}, for a single entity as a consequence of some change in a node:
+For a given entity, the following changes could happen as a consequence of some change in a node:
 \begin{itemize}
 \item some data flow values may change from top ($\top$) to bottom ($\bot$). Possible changes in the flow function is shown in fig~\ref{fig:flow_func_top_to_bot}(a) 
 \item some data flow values may change from bottom ($\bot$) to top ($\top$). Possible changes in the flow function is shown in fig~\ref{fig:flow_func_top_to_bot}(b)
@@ -858,9 +793,12 @@ program entry nodes, is defined to be a sequence
 \end{equation}
 of nodes from \textit{N}(nodes may be repeated) such that every simple path in \textit{G} is a subsequence of \textit{l}. 
 
-Consider an example shown in figure~\ref{fig:node_listing}. The node listing for this graph is \textit{l=(1, 2, 3, 4, 5, 4, 5, 6)}. Suppose, expression $b=1$ is present at
-node 4. Due to a program change if expression $a*b$ is inserted at node 1 then we can use list `\textit{l}' as an affected region without traversing the control flow 
-graph. Due to the presence of expression $b=1$ at node 4, the nodes 5 and 6 is not affected by this change but node listing method will include nodes 5 and 6
+We can use \textit{node listing} as an affected region without traversing the control flow graph.
+But \textit{node listing} may include some unaffected nodes which leads to redundant computation.   
+
+Consider an example shown in figure~\ref{fig:node_listing}. The node listing for this graph is \textit{l=(1, 2, 3, 4, 5, 4, 5, 6)}.
+Suppose, expression $b=1$ is present at node 4. Due to a program change if expression $a*b$ is inserted at node 1 then we can use list `\textit{l}' as an affected region without traversing the control flow 
+graph. Due to the presence of expression $b=1$ at node 4, the nodes 5 and 6 is not affected by this change. But node listing method will include nodes 5 and 6
 also which leads to redundant computation. Our method of creating an affected region will exclude node 5 and 6.
 
 \begin{figure}[!htb]
@@ -1003,11 +941,10 @@ We can validate the results of incremental analysis by comparing it with the res
 
 
 \subsection{Complexity}
-If \textit{n} is the total number of nodes in a graph then in the worst case the size of the affected region is equal to \textit{n}. If there are \textit{m} nodes in an 
-affected region then in the worst case it requires \textit{O(m)} time to identify the boundary nodes since we need to check each node in an affected region.  
-
-
-
+Let $n$ be the total number of nodes in the graph and $m$ be the total number of nodes in the affected region.
+The worst case time complexity to identify the boundary nodes is \textit{O(m)} since each node in an affected region needs
+to be checked.
+We note that in the extreme case, $m = n$.
 
 \section{Other Approaches of Incremental Data Flow Analysis}
 One approach~\cite{inc1} is based on Context Free Language(CFG) reachability for incremental analysis of context-sensitive points-to analysis. It traces the CFL-reachable
@@ -1019,7 +956,971 @@ provides an information of added and removed nodes/edges from the inter-procedur
 This is followed by a clear-and-propagate strategy: for each affected node, it clears the  computed information
 and then re-propagates the information from all the node’s predecessors. Basically, it creates an affected region for all kind of changes.
 
+\section{Summary}
+When a program undergoes changes, data flow values computed earlier become invalid. Updating the data flow information to incorporate the effect
+of changes by repeating an exhaustive analysis can be cost inefficient since it may compute redundant values. In such cases, incremental data flow
+analysis, which modifies only the data flow information of the program that has been affected by the change is more cost effective.
 
+In Bit-vector framework, due to program change the data flow value may change either from top to bottom or vice versa. Top to bottom change can
+be incorporated by directly propagating the values to the neighbors of the changed node. For bottom to top change, we need to create an affected 
+region to incorporate the change to the neighbors of the changed node.
+
+% In constant propagation, the IN information of a changed node may depend on the OUT information. Thus, we cannot directly propagate
+% the IN information to its neighboring nodes without attracting the possibility of dispersing incorrect information. In such cases, we need to create an affected region.
+
+
+\begin{comment} 
+As shown in figure~\ref{fig:detecting_loop}, definition of $b$ at the changed node is
+reaching to IN of that node itself. Hence, there is a path from changed node to itself. So we need to create an affected region to propagate the change to its neighbouring 
+nodes.
+\end{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{An Overview of PRISM}
+PRISM is a program analyzer generator developed bt TATA Research Development and Design Center(TRDDC).
+This chapter contains an overview of the architecture of PRISM analyzer generator.
+
+% \section{Architecture of PRISM}
+PRISM has the following two basic components:
+\begin{itemize}
+ \item Kulang compiler: Kulang compiler parses analyzer specifications and generates some java classes.
+ \item Solver : These classes are used by solver to solve data flow problems. It also uses many other packages which provide many utility functions. These functions are used 
+ my the solver.
+\end{itemize}
+
+\section{PRISM IR}
+The program to be analyzed is compiled using a front end IR generator. It generates a language independent intermediate representation of the program. Unlike intermediate
+language of typical compiler, IR is a high level language and contains complex expressions. Different front end translators are used for different languages which converts
+the language to the PRISM IR.
+
+Figure~\ref{fig:Architectur_prism1}~\cite{thesis_v} shows a block diagram of various PRISM components. IR generator generates independent intermediate representation of the program to be 
+analyzed. The generated analyzer takes IR as an input and produces output reports.
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(-20,15)(115,90)
+
+\begin{psframe}(-20,15)(115,90)
+\putnode{n1}{origin}{75}{80}{%
+	  {\textbf{Program}}
+     }
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{IR Generator}}
+
+\putnode{n3}{n2}{0}{-10}{%
+     {\textbf{Generated IR}}}
+
+\putnode{n4}{n3}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Solver}}
+
+\putnode{n5}{n4}{30}{0}{{\textbf{Results}}}
+
+\putnode{n6}{n4}{-55}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
+
+% \putnode{n8}{n6}{0}{15}{%
+%      {Copied}}
+% \rput(55,33){\rnode{a}{Generated}}
+\putnode{n7}{n6}{-30}{0}{%
+      {\textbf{.klg files}}}
+
+\putnode{n8}{n6}{5}{15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Other Utility functions}}
+\putnode{n9}{n7}{64}{-6}{%
+     {Generated Java files}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n6}{n4}
+\ncline{->}{n7}{n6}
+% \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
+\ncline{->}{n8}{n4}
+\end{psframe}
+
+\end{pspicture}
+\caption{Architecture of PRISM}
+    \label{fig:Architectur_prism1}
+\end{figure}
+
+
+
+
+% \begin{figure}[H]
+% \centering
+% \psset{unit=1mm}
+% \begin{pspicture}(-20,15)(100,80)
+% \psframe(-35,15)(115,80)
+% \putnode{n1}{origin}{60}{70}{%
+% 	  {\textbf{Program}}
+%      }
+% 
+% \putnode{n2}{n1}{0}{-15}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{IR Generator}}
+% 
+% \putnode{n3}{n2}{0}{-10}{%
+%      {\textbf{Generated IR}}}
+% 
+% \putnode{n4}{n3}{0}{-15}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{Generated analyzer}}
+% 
+% \putnode{n5}{n4}{40}{0}{{\textbf{Results}}}
+% 
+% \putnode{n6}{n4}{-55}{0}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
+% 
+% \putnode{n8}{n6}{0}{15}{%
+%      {Copied}}
+% % \rput(55,33){\rnode{a}{Generated}}
+% \putnode{n7}{n6}{-30}{0}{%
+%       {\textbf{.klg files}}}
+% 
+% \putnode{n8}{n6}{-30}{10}{%
+%     {\textbf{.java files}}}
+% \putnode{n9}{n7}{56}{-3}{%
+%      {Generated}}
+% 
+% \ncline{->}{n1}{n2}
+% \ncline{->}{n2}{n3}
+% \ncline{->}{n3}{n4}
+% \ncline{->}{n4}{n5}
+% \ncline{->}{n6}{n4}
+% \ncline{->}{n7}{n6}
+% % \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
+% \nccurve[angleA=10, angleB=150, ncurv=0.4]{->}{n8}{n4}
+%      
+% \end{pspicture}
+% \caption[Architecture of PRISM]{Architecture of PRISM}
+%    \label{fig:Architectur_prism1}
+% \end{figure}
+
+
+
+\subsubsection{Accessing statements in PRISM IR}
+Each function in the program is represented by an \texttt{IRObject}. Each \texttt{IRObject} is associated with an instance of \texttt{ICFG} (represents control flow graph of that function).
+An \texttt{ICFG} contains a list of \texttt{ICFGnodes} which represents one statement in a program. It also contains a pointer to the entry \texttt{ICFGnode} of that function.
+Each \texttt{ICFGnodes} stores a list of its successor and predecessor. Between two \texttt{ICFGnodes}, there is an \texttt{ICFGEdge} which can be either data flow or
+control flow edge. An array of \texttt{IRObjects}, representing all functions in a program, is provided by PRISM API. If an \texttt{ICFGnode} represents a
+function call, an API over it can be used to get \texttt{ICFG} of the function that is called.
+
+\subsubsection{Interpreting statements in PRISM IR}
+Each \texttt{ICFGNode} represents a statement in PRISM IR. The \texttt{ICFGNode} is associated with an instance of \texttt{Epxr} which represents the expression of the 
+statement. \texttt{Expr} is a base type and can be many of its subtypes. Some possible subtypes are: 
+\begin{itemize}
+ \item Unary
+ \item Binary
+ \item Call
+ \item Return Statement
+\end{itemize}
+
+
+An expression is composed of a tree structure of operands and operators. Each expression type has API function to access operators and operands. 
+A variable in an expression is represented using an instance of \texttt{NamedEntity}. A \texttt{NamedEntity} cantains various properties of the variable, such as name, 
+scope, data type etc. Various API functions are available to determine the type of the \texttt{NamedEntity}, such as pointer, static etc. Unlike variables, 
+\texttt{NamedEntity} can have expression like structure. Following are the types of \texttt{NamedEntities}:
+\begin{itemize}
+ \item \texttt{STNamedEntity} : ST stands for Symbol Table. It returns variables used in the program.
+ 
+ e.g. In the expression ``\texttt{a=b+c}'', a, b and c are of type \texttt{STNamedEntity}
+ 
+ \item \texttt{PSTNamedEntity} : A part of  \texttt{STNamedEntity} is represented by \texttt{PSTNamedEntity}
+ 
+  e.g. In the expression ``\texttt{x.y=a[0]}'', \texttt{a.b} is a \texttt{PSTNamedEntity} which is a part of \texttt{STNamedEntity} \texttt{a}
+ 
+ \item \texttt{IndirectNamedEntity} : \texttt{NamedEntity} to represent dereference. 
+ 
+ e.g. In the expression ``\texttt{int *p}'', \texttt{*p} is a \texttt{IndirectNamedEntity}. 
+ 
+ \item \texttt{PIndirectNamedEntity} : A part of another \texttt{IndirectNamedEntity} is represented by \texttt{PIndirectNamedEntity}. In the following example $x \rightarrow y$ is a part 
+ of \texttt{IndirectNamedEntity} which is represented by \texttt{PIndirectNamedEntity}
+ 
+e.g. \texttt{x $\rightarrow$ y= a[0]}
+ 
+ 
+ \item \texttt{HeapNamedEntity} : During dynamic allocation \texttt{HeapNamedEntity} is created. Each heap location is assigned a unique number according to the line number where
+ \texttt{malloc} or \texttt{calloc}  is used. 
+ 
+e.g. \texttt{p =(float *) malloc(sizeof(float));}
+ 
+ 
+ \item \texttt{PHeapNamedEntity} : A part of \texttt{HeapNamedEntity} is represented by \texttt{PHeapNamedEntity}. In the following example $p \rightarrow q$ represents a part of \texttt{HeapNamedEntity}
+ 
+e.g. \texttt{p = (float *) malloc(sizeof(float));}
+
+\hspace{8mm}\texttt{p $\rightarrow$ q  = a[0] ;}
+
+\item \texttt{EnumlitNamedEntity} : \texttt{NamedEntity} to represents a value of enum type
+
+\item \texttt{AddressNamedEntity} : An address data item is represented by \texttt{AddressNamedEntity}. In the following example \&b represents an \texttt{AddressNamedEntity}
+
+e.g. \texttt{a = \&b;}
+
+\item \texttt{SizeofNamedEntity} : It represents use of sizeof operator
+
+\item \texttt{StructNamedEntity} : String literal is represented by \texttt{StructNamedEntity}. In the following example ``Hello world'' is a \texttt{StructNamedEntity}
+
+e.g. \texttt{string c* =``Hello world'';}
+
+\item \texttt{LabelNamedEntity} : A label in a program is represented by \texttt{LabelNamedEntity}. In the following goto statement, a \texttt{LabelNamedEntity} is created for the label begin
+
+e.g. \texttt{goto begin;}
+
+
+\item \texttt{ArrayindexNamedEntity} : An expression where an array is indexed is represented by \texttt{ArrayindexNamedEntity}. In the following example a[0] is a 
+\texttt{ArrayindexNamedEntity}
+
+e.g. \texttt{q = a[0];}
+
+\item \texttt{NullNamedEntity} : If a pointer is made to point to address 0 then it is represented by \texttt{NullNamedEntity}
+\item \texttt{FunctionnameNamedEntity} : A function name is represented by \texttt{FunctionnameNamedEntity}
+\item \texttt{UndefinedNamedEntity} : If a variable is undefined then the value represented by that variable is \texttt{UndefinedNamedEntity}
+
+ %%copy from vinit's report
+ 
+ 
+\end{itemize}
+
+
+\section{Structure of analyser generator}
+An analyser writer needs to write two following components:
+\begin{itemize}
+ \item Kulang specifications~\cite{prism}
+ \item Data flow analysis API class
+\end{itemize}
+
+
+\subsection{Kulang specifications}
+While analyzing a program, Intraprocedural Control Flow Graph (ICFG) is created for each function. For each function in ICFG, GEN and KILL summary is computed.
+The specification for computing GEN and KILL summary is specified using Kulang query files. A kulang query file has ``\textbf{.klg}'' extension.
+The query file consists of a Kulang query to be solved. The file is organized in the following way:
+\begin{itemize}
+ \item Package declaration : This is the first line in the kulang file. It tells the Kulang compiler to put the generated Java files into the specified package, for
+ all the queries written in the file.
+
+ Syntax :
+ 
+\hspace{15mm}\textit{package identifier}
+
+\hspace{15mm} For e.g. \texttt{package darpan.klgLib;}
+
+\item Typedef :\newline 
+Syntax : 
+
+\hspace{15mm}\textit{TypeName::Type}
+
+\hspace{15mm}For e.g. \texttt{tup::tuple(int,NamedEntity);}
+
+\item Use declaration : The ``use'' declaration is used when the user wants to use/call other Kulang queries from other packages.
+It is similar to ``\texttt{import}'' statement in java. There are two following types:
+	\begin{itemize}
+	\item \texttt{fun\_use} : This defines the path from where the query generated Java files should be accessed
+			  \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{fn\_use identifier;}
+					    
+					    \hspace{15mm} For e.g. \texttt{fn\_use darpan.klgLib;}
+	\item \texttt{java\_use} : It specifies the class file where Java files accessed in this query are present. It is followed by java
+	decl, which specifies the Java functions used from the file specified in \texttt{java\_use}
+	 \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{java\_use identifier;}
+						    
+					    \hspace{15mm} \textit{java\_decl} 
+
+					    \hspace{15mm} \textit{type function ;}
+
+					    \hspace{15mm} For e.g. \texttt{java\_use darpan.klgLib.Aux;}
+					    
+					    \hspace{31mm}\texttt{java\_decl}
+					    
+    					    \hspace{30mm} \texttt{int print\_set(set NameEntity);}
+
+	\end{itemize}
+
+	
+\item Mode : Mode is defined as follow. FLA stands for Function Level Analysis.
+
+ Syntax : 
+			  
+		\hspace{15mm} \texttt{[FLA];}
+		
+\item Lattice Type : Type of the elements in lattice. Two following types are possible:
+
+\begin{itemize}
+	\item Forward lattice : Used in forward analysis
+			  \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{Forwardlattice IDENT::typedef;}
+					    
+					    \hspace{15mm} For e.g. \texttt{Forwardlattice L::tup;}
+	\item Backward lattice : Used in backward analysis
+	 \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{Backwardlattice IDENT::typedef;}
+						    
+					    \hspace{15mm} For e.g. \texttt{Backwardlattice L::tup;}
+
+					   
+	
+\end{itemize}
+
+\item  Top : Top of the lattice for data flow analysis. Type of the Expr should be compatible with the type of lattice element given in the Lattice Specification. Following are the types
+\begin{itemize}
+	\item Forward top : top of forwardlattice
+			  \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{ForwardTop::Expr;}
+					    
+					    \hspace{15mm} For e.g. \texttt{ForwardTop::(tup){};}
+	\item Backward top : top of backwardlattice
+	 \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{BackwardTop::Expr;}
+						    
+					    \hspace{15mm} For e.g. \texttt{BackwardTop::(tup){};}
+
+					   
+\end{itemize}
+
+\item Meet : specifies the meet operation to be performed at the merge of two paths. Following are the types:
+\begin{itemize}
+	\item Forward meet : meet operation for forward analysis
+			  \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{IDENT ForwardMeet IDENT : Expr;}
+					    
+					    \hspace{15mm} For e.g. \texttt{A ForwardMeet B : A+B;}
+	\item Backward meet : meet operation for backward analysis
+	 \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{IDENT BackwardMeet IDENT : Expr;}
+					    
+					    \hspace{15mm} For e.g. \texttt{A BackardMeet B : A+B;}
+
+					   
+\end{itemize}
+
+\item Boundary values : It gives the starting value to solve the Data Flow problem.The
+Program Entry ( in case of a Forward Problem ) / Program Exit ( in case of a Backward
+Problem ) node will be initialized with this value.
+\begin{itemize}
+	\item Forward boundary value : boundary value for forward analysis
+			  \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{ForwardBoundaryValue : Expr;}
+					    
+					    \hspace{15mm} For e.g. \texttt{ForwardBoundaryValue :(tup){};}
+	\item Backward boundary value : boundary value for backward analysis
+	 \newline Syntax : 
+			  
+					    \hspace{15mm} \textit{BackwardBoundaryValue : Expr;}
+					    
+					    \hspace{15mm} For e.g. \texttt{BackwardBoundaryValue :(tup){};}
+
+					   
+\end{itemize}
+
+\item Flow functions : It defines how data flow value changes when it passes through a node or edge. The specific node or edge is available to the function as a parameter.
+Four types of flow function exits - \texttt{ForwardNodeflow}, \texttt{BackwardNodeFlow}, \texttt{ForwardEdgeFlow} and \texttt{BackwardEdgeFlow}
+\newline Syntax for flow functions:
+\begin{itemize}
+ \item 
+%  \begin{lstlisting}[]  % Start your code-block
+
+\textit{Forward/BackwardNodeflow(IDENT:nodeType, IDENT:LatticeType)}
+
+\textit{let}
+
+\hspace{10mm} \textit{Expressions;}
+
+\textit{in}
+
+\hspace{10mm}\textit{Return variable;}
+% \end{lstlisting}
+ 
+ \item
+%  \begin{lstlisting}[]  % Start your code-block
+
+\textit{Forward/BackwardEdgeflow(IDENT:nodeType, IDENT:LatticeType)}
+
+\textit{let}
+
+\hspace{10mm}\textit{Expressions;}
+
+\textit{in}
+
+\hspace{10mm}\textit{Return variable;}
+% \end{lstlisting}
+  
+\end{itemize}
+
+\end{itemize}
+
+\subsubsection{Kulang Constructs}
+\begin{itemize}
+ \item Types : It supports standard data types such as int, char, string etc, IR model types and JAVA methods that operate over those types.
+ Type casting is also supported in kulang specifications.
+ 
+ \item Constants : PRISM allows usual constants for standard types,such as  NULL, true, 1, ‘a’ etc.
+ \item Expressions : Expressions are bound to identifiers. Contional expressions are also allowed.
+ 
+ For e.g.
+ \begin{lstlisting}[]  % Start your code-block
+   
+   x=if(condition)
+     then
+	  expression1
+     else
+	  expression2
+     endif;
+ 
+\end{lstlisting}
+
+\item Tuples : It is collection of data items of same or different data types.
+
+For e.g.
+ \hspace{15mm} \texttt{Tuple=[Expr1,Expr2];}
+ 
+\item Set : It is a collection of data items of same data type.
+
+For e.g.
+ \hspace{15mm} \texttt{Set=\{a,b\};}				    
+
+ \item Iterations : Consider an example as shown below, x takes each element in S and check for the condition after \textbf{`\textbar'}.
+ If it satisfies the condition then that element is returned and store it in \texttt{newSet}. 
+ 
+ For e.g.
+ \hspace{15mm} \texttt{newSet = \{x$\leftarrow$S\hspace{1mm} \textbar \hspace{1mm} condition \};}
+ 
+ \item Accumulation : Consider an example as shown below, \textbf{a} is an accumulator which is initialized to an empty set. \textbf{`x'}
+ takes each element in \textbf{`S'}. Operation is performed on \textbf{`x'} and then the result is added to the accumulator.
+ 
+ For e.g.
+ 
+  \texttt{newSet= <<a :(set NamedEntity)\{\}; x$\leftarrow$A; a+\{operation\}>>;}
+\end{itemize}
+
+
+
+ 
+ 
+\subsection{Data flow analysis API class}
+This class contains functions to invoke the execution of the analysis. It also provides an API to get results of the analysis. It can be
+accessed by user to get data flow values at some program point. It can also be use while solving a data flow problem dependent on the implemented
+data flow problem. 
+
+Figure~\ref{fig:generated_analyser} shows an architecture of generated analyzer. The solver takes data flow analysis API class, functions generated by kulang compiler and some utility functions provided
+by PRISM framework as input and generates a result.
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(-20,10)(105,80)
+\psframe(-20,10)(105,80)
+
+\putnode{n2}{origin}{45}{30}{%
+     \psframebox[linewidth=.3,framesep=5.7]{Solver}}
+\putnode{n1}{n2}{-40}{0}{%
+     \textbf{Generated IR}}
+
+
+ \putnode{n3}{n2}{40}{0}{%
+      \textbf{Result}}
+
+ \putnode{n4}{n2}{-40}{30}{%
+      \psframebox[linewidth=.3,framesep=1.7]{\begin{tabular}{c}
+                                             Generated \\
+                                             file	s by \\
+                                             kulang compiler
+                                             \end{tabular}
+}}
+
+ \putnode{n5}{n2}{0}{30}{%
+      \psframebox[linewidth=.3,framesep=1.7]{Utility functions}}
+ 
+\putnode{n6}{n2}{40}{30}{%
+      \psframebox[linewidth=.3,framesep=1.7]{\begin{tabular}{c}
+                                             Data flow \\
+                                             analysis API
+                                             \end{tabular}
+}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n4}{n2}
+\ncline{->}{n5}{n2}
+\ncline{->}{n6}{n2}  
+\end{pspicture}
+\caption[Block diagram of solver]{Architecture of analyzer generator}
+   \label{fig:generated_analyser}
+\end{figure}
+
+
+\subsection{Running the generated analyser}
+The steps for configuring and running the analyzer are given in the Appendix~\ref{ap:A}.
+
+\begin{comment}
+\subsection{Limitations in current version of PRISM}
+This section describes some imitations in current version of PRISM. Some of which we are trying to overcome in our implementation.
+Following are some of the limitations :
+\begin{itemize}
+ \item It does not support Incremental data flow analysis
+ \item Meet function needs to be explicitly specified in kulang specifications or defined as a java function. The meet function can be inferred from
+the lattice of the data flow problem
+\item There is no proper way to debug the kulang specifications
+ \item Very hard to understand the specification language
+\end{itemize}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Liveness Based Reaching Definition Analysis using PRISM}
+\begin{comment}
+In order to understand PRISM, we have implemented a query for Intra-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
+implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
+Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
+liveness.
+
+\section{Intra-procedural reaching definition analysis}
+This section describes the flow functions for Intra-procedural reaching definition analysis.
+The Data flow equations for Reaching Definition analysis is shown below:
+
+\begin{equation}
+\begin{split}
+\mbox{\textit{In}}_n &= \left\{ \begin{array}{ll}
+	  \mbox{\textit{BI}} & \mbox{n is Start block}\\
+	  \bigcup\limits_{p \in pred(n)} Out_p & \mbox{otherwise}
+	  \end{array} \right.\\ 
+\mbox{\textit{Out}}_n &= \mbox{\textit{Gen}}_n \cup (\mbox{\textit{In}}_n - \mbox{\textit{Kill}}_n) \\
+\mbox{\textit{BI}} &= \{d_x : x = \mbox{\textit{undef}} \mid x \in \mbox{\textit{Var}}\} \\
+\end{split} 
+\end{equation}
+  
+Flow function for binary statements in shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
+directly propagates the values at the IN of that node. First we find the NE present in the expression (line no.4-6). `\texttt{line}'
+ function at line 7, returns the line number of the statement. `\texttt{kill}' set at line 8 contains the set of elements that need 
+ to be removed from the set of data flow values reaching at that node. `\texttt{HasElement}' is a function(as shown below) defined in
+`\textbf{Aux.java}' file, it takes \texttt{NamedEntity} and set of tuples as a parameter, and returns a set of tuples whose \texttt{NamedEntity} is same
+as that of the \texttt{NamedEntity} present in the \texttt{lhs} of the statement. `\texttt{def}' set contains the definition defined at that node.
+
+
+\begin{lstlisting}[]  % Start your code-block
+
+1. ForwardNodeflow( n: Binary, S: L )
+2.     if(operator(n) == '=') then   
+3.        let        
+4.                rt_expr = rhs(n);
+5.                l_exp = lhs(n);
+6.                ne = NE(n);
+7.                line_no = line(l_exp);
+8.                kill = HasElement(ne,S); 
+9.                def = {[line_no,ne]};
+10.       in
+11.       	  (S-kill)+def        
+12.       else
+13.        	  S
+14.       endif;
+\end{lstlisting}
+
+Following is a code for \texttt{unary} statements. Similarly, it will generate a `\texttt{kill}' set by using a function `\texttt{HasElement}' 
+. \texttt{def} contains a definition defined at that node. Statement \texttt{`(S-kill)+def'}, will calculate the values at the OUT of that
+node.
+\begin{lstlisting}[]
+15. ForwardNodeflow( n: Unary, S: L )
+16.	let
+17.		ne = NE(n);
+18.		line_no = line(n);
+19.		kill = HasElement(ne,S);
+20.		def = {[line_no,ne]};
+21.	in
+22.		(S-kill)+def;
+\end{lstlisting}
+
+For other types of statements, it will just propagates the values reaching at the In of that node to its OUT. Following in the code.
+
+\begin{lstlisting}[]
+23. ForwardNodeflow( n: _, S: L ) 
+24.	S;
+\end{lstlisting}
+
+Java code for function `\texttt{HasElement}' is shown below :
+\begin{lstlisting}
+1. static Set HasElement(NamedEntity ne , Set info_in)
+2. {
+3.	int no_ele;
+4.	Set ret= new HashSet();
+5.	no_ele=info_in.nElems();
+6.	Enumeration en=info_in.Enumerate();
+7.	while(en.hasMoreElements())
+8.	{
+9.		Tuple t=(Tuple)en.nextElement();
+10.		if(t.AtIndex(1).equals(ne))
+11.			ret.insert(t);
+12.	}	
+13.
+14.	return ret;
+15. }
+
+\end{lstlisting}
+
+\section{Liveness-Based Intra-procedural reaching definition analysis}
+This section describes the flow functions for Liveness-Based Intra-procedural reaching definition analysis. This is a bi-directional
+analysis and hence flow function will take two lattices \texttt{R} and \texttt{L} as a parameter. Lattice \texttt{R} is for reaching definition analysis and
+\texttt{L} is for strongly liveness analysis. In first phase, it will do strongly liveness analysis which is a backward flow analysis.
+Data flow equations for liveness-Based reaching definition analysis in shown below. The reaching definition sets (\textit{RIn}$_n$ and \textit{ROut}$_n$) are restricted 
+to liveness set (\textit{LIn}$_n$ and \textit{LOut}$_n$)
+
+\begin{equation}
+\begin{split}
+\mbox{\textit{LIn}}_n &= f_n(\mbox{\textit{Out}}_n) \\
+\mbox{\textit{LOut}}_n &= \left\{ \begin{array}{ll}
+	  BI & \mbox{n is End}\\
+	  \bigcup\limits_{s \in succ(n)} In_s & \mbox{otherwise}
+	  \end{array} \right.\\ 
+\mbox{where,}\\
+f_n(X) &= \left\{ \begin{array}{ll}
+	  (X-\{y\})\cup(\mbox{\textit{Opd(e)}}\cap \mbox{\textit{Var}}) & \mbox{n is y = e, e $\in$ Expr, y $\in$ X}\\
+	  X-{y} & \mbox{n is input(y)}\\
+	  X \cup {y} & \mbox{n is use(y)} \\
+	  X & \mbox{otherwise}
+	  \end{array} \right.\\ 
+\\
+\mbox{\textit{RIn}}_n &= \left\{ \begin{array}{ll}
+	  \mbox{\textit{RBI}} & \mbox{n is Start block}\\
+	  \bigcup\limits_{p \in pred(n)}Out_p\mid_{LIn_n} & \mbox{otherwise}
+	  \end{array} \right.\\ 
+	  \\
+\mbox{\textit{ROut}}_n &= \mbox{\textit{Gen}}_n \cup (\mbox{\textit{In}}_n - \mbox{\textit{Kill}}_n) \mid_{LOut_n} \\
+\\
+\mbox{\textit{RBI}} &= \{d_x : x = \mbox{\textit{undef}} \mid x \in \mbox{\textit{Var}}\} \\	  
+\end{split} 
+\end{equation}
+
+
+Flow function for \texttt{binary} statements is shown below. The set `\texttt{rNE}' at line 6, contains \texttt{NamedEntity} in rhs of the statement and `\texttt{lNE}' at line 7, contains
+\texttt{NamedEntity} in lhs of the statement. At line 8, if the statement contains ``$=$'' operator and variable in lhs is present at the OUT of node, then we will add
+all the variables used and remove the defined variable in the statement from the set `\texttt{x}'. Otherwise, we will add all the used variables in the set
+`\texttt{x}'.
+
+\begin{lstlisting}
+
+1. BackwardNodeflow( n: Binary, R: rec, L: Liv )
+2.        let
+3.                
+4.                rt_expr=rhs(n);
+5.                lt_expr=lhs(n);
+6.                rNE=getNEs(rt_expr);
+7.                lNE=getNEs(lt_expr);
+8.                x = if(operator(n)=='=')
+9.                        then
+10.                                if(isLive(lt_expr,L)==true)
+11.                                        then
+12.                                                (L - lNE) + rNE
+13.                                        else
+14.                                                L
+15.                                endif
+16.                        else
+17.                                ( L + lNE ) + rNE
+18.	                   endif;
+19.        in
+20.                x;
+
+\end{lstlisting}
+
+
+Flow function for \texttt{unary} statements is given below. At line 23, \texttt{operands\_ne} contains the \texttt{NamedEntities} of all the variables used in the 
+statement. At line 25, variables which are used in the statement are added to the Liveness set `L'.
+
+\begin{lstlisting}
+21. BackwardNodeflow( n: Unary, R: rec, L: Liv )
+22.        let
+23.                operands_ne=getNEs(n);
+24.        in
+25.                L+operands_ne;
+
+\end{lstlisting}
+
+Flow function for \texttt{Call} statements is given below. At line 29, \texttt{UseInCall} contains \texttt{NamedEntities} of all the variables present in call
+statement. At line 31, the used variables are added to the Liveness set.
+
+\begin{lstlisting}
+26. BackwardNodeflow( n: Call, R: rec, L: Liv )
+27.        let
+28.                d = emptySet();
+29.                UseInCall = getNEsFromCall(n);
+30.        in
+31.                d + L + UseInCall
+\end{lstlisting}
+
+Flow function for other types of nodes is shown below.
+
+\begin{lstlisting}
+32. BackwardNodeflow( n: _, R: rec, L: Liv)
+33.        L;
+\end{lstlisting}
+
+
+After computing liveness set as discussed above, based on that set reaching definition is performed. Here we will compute reaching definition of those
+variables which are live at the IN of that node. This is a forward flow analysis.
+
+Flow function for \texttt{binary} statements is shown below. At line 39, \texttt{line\_no} will contain the line number of the statement. At line 40,
+\texttt{kill} set will contain \texttt{NamedEntity} of all the values at the IN of node whose \texttt{NamedEntity} is same as that of the variable defined at the statement.
+At line 41, \texttt{sur} will contain the computed data flow value at the node. From line 43 to 49, if statement contains ``='' operator then it will 
+check whether the value which is defined is live or not, otherwise it will propagate only those values which is live at the IN of that node. Function
+\texttt{removeNonLive} checks the liveness of the variable defined at the node. If the variable is live then add the definition to the reaching set.
+
+\begin{lstlisting}
+34. ForwardNodeflow( n: Binary, R: rec , L:Live )
+35.        let
+36.                rt_expr=rhs(n);
+37.                l_exp=lhs(n);
+38.                ne=NE(n);
+39.                line_no=line(l_exp);
+40.                kill=HasElement(ne,R);
+41.                def={[line_no,ne]};
+42.                sur=(R-kill)+def;
+43.               survive=if(operator(n)=='=')
+44.                        then
+45.                                removeNonLive(sur,L)
+46.                        else
+47.                                removeNonLive(R,L)
+48.
+49.                        endif;
+50.        in
+51.                survive;
+\end{lstlisting}
+
+Following is the flow function for \textbf{unary} statements. At line 60, after computing the values at the node (55-59), if the variable is live at the IN of the node
+then we will add the definition of the variable defined at that not. 
+
+\begin{lstlisting}
+52. ForwardNodeflow( n: Unary, R: rec , L:Liv )
+53.        let
+54.                
+55.                ne=NE(n);
+56.                line_no=line(n);
+57.                kill=HasElement(ne,R);
+58.                def={[line_no,ne]};
+59.                sur=(R-kill)+def;
+60.		  survive=removeNonLive(sur,L);
+61.        in
+62.               survive;
+
+\end{lstlisting}
+
+Flow function for other types of statements is given below.
+
+\begin{lstlisting}
+63. ForwardNodeflow( n: _, R: rec , L:Liv)
+64.        let
+65.                survive=removeNonLive(R,L);
+66.        in
+67.                survive;
+
+\end{lstlisting}
+
+Following is the Java code for function `\texttt{isLive}' 
+\begin{lstlisting}
+1.static boolean isLive(Expr ex,Set s)
+2.{
+3.      try
+4.      {
+5.	  Ident_AST iast = (Ident_AST) ex.operands().getAt(0);
+6.	  NamedEntity ne = iast.NE();
+7.	  if(s == null)
+8.		return false;
+9.	  if(s.belongs(ne))
+10.		return true;
+11.	  else
+12.		return false;
+13.      }
+14.      catch(Exception e)
+15.      {
+16.	  return true;
+17.       }
+18.}
+\end{lstlisting}
+
+
+\section{SPEC Benchmark Evaluation}
+In order to compare the performance between two analysis i.e. reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
+For each query, we measured the average size of the set of data flow values computed at each program point. In general, average size of the set at each
+program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+
+Performance measurement of reaching definition without liveness is shown in table~\ref{tab:performance_without_l}.
+\begin{table}[H]
+  \begin{center}
+      %\label{tab:Available_exp}
+    \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
+    \hline
+%        & \multicolumn{2}{c}{$a+b$} & \multicolumn{2}{c}{$a*b$} & \multicolumn{2}{c}{$a*c$} \\
+%     \hline
+      Name & No. of Basic Blocks & Avg. values at Entry (in \%) & Avg. values at Exit (in \%) & Total values (in \%)\\
+      \hline
+%    	\midrule
+   	  bzip2 & 8004 & 26.878 & 26.826 & 26.852 \\ \hline
+   	  mcf & 1066 & 3.991 & 4.001 & 3.996 \\ \hline
+   	  hmmer & 24996 & 2.574 & 2.566  & 2.570 \\ \hline
+   	  sjeng & 10892 & 39.219 & 39.245 & 39.232 \\ \hline
+   	  h264ref & 42559 & 6.370 & 6.225 & 6.297\\ \hline
+   	  lbm & 603 & 6.515 & 6.537 & 6.526\\ \hline
+   	  
+	\hline
+%       \bottomrule 
+    \end{tabular}
+    \caption{Benchmark results for normal reaching definition analysis.}
+      \label{tab:performance_without_l}
+  \end{center}
+\end{table}
+
+
+
+The performance measurement of reaching definition with liveness is shown in table~\ref{tab:performance_with_l}.
+\begin{table}[H]
+  \begin{center}
+      %\label{tab:Available_exp}
+    \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
+    \hline
+%        & \multicolumn{2}{c}{$a+b$} & \multicolumn{2}{c}{$a*b$} & \multicolumn{2}{c}{$a*c$} \\
+%     \hline
+      Name & No. of Basic Blocks & Avg. values at Entry (in \%) & Avg. values at Exit (in \%) & Total values (in \%)\\
+      \hline
+%    	\midrule
+   	  bzip2 & 8004 & 4.852 & 4.570 & 4.711 \\ \hline
+   	  mcf & 1066 & 0.724 & 0.666 & 0.695 \\ \hline
+   	  hmmer & 24996 & 0.672 & 0.636  & 0.654 \\ \hline
+   	  sjeng & 10892 & 3.685 & 3.466 & 3.576 \\ \hline
+   	  h264ref & 42559 & 5.321 & 5.197 & 5.259\\ \hline
+   	  lbm & 603 & 1.633 & 1.600 & 1.616\\ \hline
+   	  
+	\hline
+%       \bottomrule 
+    \end{tabular}
+    \caption{Benchmark results for liveness-based reaching definition analysis.}
+      \label{tab:performance_with_l}
+  \end{center}
+\end{table}
+
+
+Figure~\ref{fig:bench_mark} shows a comparision between two analysis.
+\begin{figure}[p]	
+\centering
+\includegraphics[width=0.8\textwidth]{graph.eps}
+\caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
+\label{fig:bench_mark}
+\end{figure}
+
+\section{Summary}
+We have implemented a query for reaching definition analysis with and without liveness using PRISM. Other queries which are 
+implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing
+and Strong liveness analysis with aliasing. 
+
+In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
+For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
+point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Incremental PRISM Solver}
+In this chapter, first we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
+Then we described our extension to PRISM.
+
+\section{Bi-directional Solver}
+The Kulang, a specification language, is used to specify the data flow analysis in PRISM. The bi-directional Kulang compiler parses the specifications
+and generates java classes. The Bi-directional Solver invokes the generated java classes to solve the data flow problem.
+
+Following are generated .java files:
+\begin{itemize}
+ \item \texttt{kulang$<$queryname$>$FG$\_$Flow.java}: It contains \textit{forward and backward} flow and inter-procedural edge functions.  
+ \item \texttt{kulang$<$queryname$>$FG$\_$Meet.java}: It contains \textit{forward and backward} meet functions.
+ \item \texttt{kulang$<$queryname$>$FG$\_$Adapter.java}: It provides an interface to create an instance of the query. 
+ \item \texttt{kulang$<$queryname$>$FG$\_$ModelPopulator.java}: It populates the model.
+\end{itemize}
+
+
+\subsection{Modules of Bi-directional Solver}
+Following modules are used in bi-directional Solver.
+\begin{itemize}
+ \item DFStore: It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
+ \item ValueContexts: It stores information about contexts formed during analysis.
+ \item ContextTransition: It stores context transition graph which is a method of representing call strings.
+ \item DFSolverLogger: This module provides utilities for logging, measuring performance parameters of the core solver.
+ \item InterproceduralWorklist: This module manages work list and applies a priority scheme to the work list.
+\end{itemize}
+
+More details about these modules are presented in Appendix.
+
+\subsection{Limitations}
+Following are some of the limitations :
+\begin{itemize}
+ \item It does not support Incremental data flow analysis.
+ \item It outputs the results in a text file. 
+ \item Meet function needs to be explicitly specified in kulang specifications. The meet function can be inferred from
+the lattice of the data flow problem
+\item There is no proper way to debug the kulang specifications
+ \item Very hard to understand the specification language
+\end{itemize}
+
+\section{Incremental solver}
+In this section, we describe the implementation of Incremental Solver. First we explained the architecture of the solver which is followed by implementation details. 
+\subsection{Architecture of Incremental Solver}
+Figure~\ref{} shows an architecture of Incremental Solver.
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(-20,15)(115,90)
+
+\begin{psframe}(-20,15)(115,90)
+\putnode{n1}{origin}{0}{80}{%
+	  {\textbf{Program}}
+     }
+  
+\putnode{n2}{n1}{15}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Changed Node Detector}}
+% 
+% \putnode{n3}{n2}{0}{-10}{%
+%      {\textbf{Generated IR}}}
+% 
+% \putnode{n4}{n3}{0}{-15}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{Solver}}
+% 
+% \putnode{n5}{n4}{30}{0}{{\textbf{Results}}}
+% 
+% \putnode{n6}{n4}{-55}{0}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
+% 
+% \putnode{n7}{n6}{-30}{0}{%
+%       {\textbf{.klg files}}}
+% 
+% \putnode{n8}{n6}{5}{15}{%
+%      \psframebox[linewidth=.3,framesep=1.7]{Other Utility functions}}
+% \putnode{n9}{n7}{64}{-6}{%
+%      {Generated Java files}}
+% 
+% \ncline{->}{n1}{n2}
+% \ncline{->}{n2}{n3}
+% \ncline{->}{n3}{n4}
+% \ncline{->}{n4}{n5}
+% \ncline{->}{n6}{n4}
+% \ncline{->}{n7}{n6}
+% % \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
+% \ncline{->}{n8}{n4}
+\end{psframe}
+
+\end{pspicture}
+\caption{Architecture of Incremental PRISM}
+    \label{fig:Architectur_incrementalPrism}
+\end{figure}
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Incremental Analysis in General framework}
+\begin{comment}
 \section{Incremental Analysis in Non Bit-vector Framework}
 \begin{figure}[H]
 \centering
@@ -1128,201 +2029,8 @@ level to other levels is also possible.
  \item a side level change
 \end{itemize}
 
-\begin{comment}
-As a consequence of some change in a node:
-\begin{itemize}
-\item some data flow values may change from top ($\top$) to constant value in lattice. In other words, top to lower level change in lattice. 
-\item some data flow values may change from bottom ($\bot$) to constant value in lattice. In other words, bottom to upper level change in lattice. 
-\item some data flow values may change from constant value to either top ($\top$) or bottom ($\bot$), or it may change to some other constant value (i.e side level change), in lattice.
-\end{itemize}
-\end{comment}
 
 
-\begin{comment}
-\subsection{Change from top ($\top$) to lower level in lattice}
-Since, $\forall x \in L : x \sqcap \top = x $, a top ($\top$) value for a data flow property is an intermediate value until the data flow analysis is completed. 
-So whenever there is top to lower level change in a program, the changes can be propagated directly to its neighbouring nodes.
-
-Consider a constant propagation analysis in control flow graph in figure~\ref{fig:t_to_l}(a). 
-At each program point variable $b$ is initialised to $\top$ (i.e undefined). 
-Suppose, due to some program change expression $b=1$ is inserted at node $n2$ as shown in figure~\ref{fig:t_to_l}(b).
-After this change, variable $b$ becomes $1$ at the OUT of node $n2$, which is a change from top level ($\top$) to lower level (constant value).
-Since $IN_2=OUT_1 \sqcap OUT_3$, which implies that the value of $IN_2$ is determined by the value of $OUT_2$ alone. Thus, the effect of top to lower level change
-can be incorporated by directly propagating the change to its neighbour. 
-
-
-
-\begin{figure}[!htb]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(-40,0)(80,50)
-%%\psframe(-40,0)(80,50)
-\putnode{n1}{origin}{-20}{40}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
-\rput(-30,40){\rnode{a}{n1}}
-\rput(-7,43.5){\rnode{a1}{b=$\top$}}
-\rput(-7,36.5){\rnode{a2}{b=$\top$}}
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
-\rput(-30,25){\rnode{b}{n2}}
-\rput(-7,28.5){\rnode{b1}{b=$\top$}}
-\rput(-7,21.5){\rnode{b2}{b=$\top$}}
-\putnode{n3}{n2}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
-\rput(-30,10){\rnode{c}{n3}}
-\rput(-7,13.5){\rnode{c1}{b=$\top$}}
-\rput(-7,6.5){\rnode{c2}{b=$\top$}}
-
-\rput(-20,0){\rnode{c3}{(a)}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncloop[armA=4,armB=4,angleA=-90,angleB=90,loopsize=-18,
-		linearc=0.5,offsetB=1]{->}{n3}{n2}
-
-		
-\putnode{n1}{origin}{45}{40}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
-\rput(35,40){\rnode{a}{n1}}
-\rput(58,43.5){\rnode{a1}{b=$\top$}}
-\rput(58,36.5){\rnode{a2}{b=$\top$}}
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$b=1$}}
-\rput(35,25){\rnode{b}{n2}}
-\rput(58,28.5){\rnode{b1}{b=$1$}}
-\rput(58,21.5){\rnode{b2}{b=$1$}}
-\putnode{n3}{n2}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
-\rput(35,10){\rnode{c}{n3}}
-\rput(58,13.5){\rnode{c1}{b=$1$}}
-\rput(58,6.5){\rnode{c2}{b=$1$}}
-\rput(45,0){\rnode{c3}{(b)}}
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncloop[armA=4,armB=4,angleA=-90,angleB=90,loopsize=-18,
-		linearc=0.5,offsetB=1]{->}{n3}{n2}
-
-		
-		
-\end{pspicture}
-\caption[change from top level to lower level of lattice]{Control flow graph}
-   \label{fig:t_to_l}
-\end{figure}
-
-\subsection{Change from bottom ($\bot$) to upper level in lattice}
-In case of bottom, $\forall x \in L : x \sqcap \bot =\bot $ ,bottom is a final value even during analysis. Therefore, whenever there is a $\bot$ to upper level change we need
-some more computation to incorporate the effect to its neighbour.
-
-Consider a constant propagation analysis in control flow graph in figure~\ref{fig:bottom_to_up}.
-At node $n4$, if expression $b=2$ has been removed due to some program change as shown in figure~\ref{fig:bottom_to_up}(b),then value of $b$ at the IN of $n5$
-becomes $1$ which is a bottom ($\bot$) to upper level change in lattice. 
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,10)(150,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{27}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $b=1$}}
-\rput(13,80){\rnode{a}{n1}}
-\rput(13,85){\rnode{a}{\blue$\langle b=\top \rangle$}}
-\rput(13,74){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(15,65){\rnode{a}{n2}}
-\rput(27,58){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(-1,56){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(17,50){\rnode{a}{n3}}
-\rput(-1,44){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{$b=2$}}
-\rput(57,50){\rnode{a}{n4}}
-\rput(59,56.5){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(59,43.5){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(38,35){\rnode{a}{n5}}
-\rput(13,38){\rnode{a}{\blue$\langle b=\bot \rangle$}}
-\rput(13,30){\rnode{a}{\blue$\langle b=\bot \rangle$}}
-
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(39,20){\rnode{a}{n6}}
-\rput(13,24){\rnode{a}{\blue$\langle b=\bot \rangle$}}
-\rput(13,17){\rnode{a}{\blue$\langle b=\bot \rangle$}}
-\rput(27,10){\rnode{a1}{(a)}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-%%\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
-%%		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-
-\putnode{n1}{origin}{101}{80}{%
-  \psframebox[linewidth=.3,framesep=1.7]{ $b=1$}}
-\rput(87,80){\rnode{a}{n1}}
-\rput(87,85){\rnode{a}{\blue$\langle b=\top \rangle$}}
-\rput(87,74){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(88,65){\rnode{a}{n2}}
-
-\rput(101,58){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(74,56){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(92,50){\rnode{a}{n3}}
-
-\rput(74,44){\rnode{a}{\blue$\langle b=1  \rangle$}}
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(109,50){\rnode{a}{n4}}
-\rput(129,55){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(129,45){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n5}{n2}{0}{-30}{%
-
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(87,30){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(87,39){\rnode{a}{\blue$\langle b=1 \rangle$}}
-\rput(87,35){\rnode{a}{n5}}
-\rput(87,25){\rnode{a}{\blue$\langle b=1 \rangle$}}
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(89,20){\rnode{a}{n6}}
-\rput(87,15){\rnode{a}{\blue$\langle b=1\rangle$}}
-\rput(101,10){\rnode{a1}{(b)}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-%%\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
-  %%              linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-
-
-
-		
-\end{pspicture}
-\caption[Control flow graph for constant propagation]{Control flow graph}
-   \label{fig:bottom_to_up}
-\end{figure}
-\end{comment}
 
 \subsubsection{Change from intermediate level to top}
 Consider a Constant propagation analysis in control flow graph shown in figure~\ref{fig:inter_otherlevels_upper}.
@@ -1704,866 +2412,24 @@ Given a changed node $N$, the detection process proceeds as follows
  \item Create Affected Region.
  \item Affected Region Need Not be Created.
  \end{enumerate}
- 
-
-
-
-
-
-\section{Summary}
-When a program undergoes changes, data flow values computed earlier become invalid. Updating the data flow information to incorporate the effect
-of changes by repeating an exhaustive analysis can be cost inefficient since it may compute redundant values. In such cases, incremental data flow
-analysis, which modifies only the data flow information of the program that has been affected by the change is more cost effective.
-
-In Bit-vector framework, due to program change the data flow value may change either from top to bottom or vice versa. Top to bottom change can
-be incorporated by directly propagating the values to the neighbors of the changed node. For bottom to top change, we need to create an affected 
-region to incorporate the change to the neighbors of the changed node.
-
-In constant propagation, the IN information of a changed node may depend on the OUT information. Thus, we cannot directly propagate
-the IN information to its neighboring nodes without attracting the possibility of dispersing incorrect information. In such cases, we need to create an affected region.
-
-
-\begin{comment} 
-As shown in figure~\ref{fig:detecting_loop}, definition of $b$ at the changed node is
-reaching to IN of that node itself. Hence, there is a path from changed node to itself. So we need to create an affected region to propagate the change to its neighbouring 
-nodes.
-\end{comment}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{An Overview of PRISM}
-PRISM is a program analyzer generator developed bt TATA Research Development and Design Center (TRDDC).
-This chapter contains an overview of the architecture of PRISM analyzer generator.
-
-% \section{Architecture of PRISM}
-PRISM has the following two basic components:
-\begin{itemize}
- \item Kulang compiler: Kulang compiler parses analyzer specifications and generates some java classes.
- \item Solver : These classes are used by solver to solve data flow problems. It also uses many other packages which provide many utility functions. These functions are used 
- my the solver.
-\end{itemize}
-
-\section{PRISM IR}
-The program to be analyzed is compiled using a front end IR generator. It generates a language independent intermediate representation of the program. Unlike intermediate
-language of typical compiler, IR is a high level language and contains complex expressions. Different front end translators are used for different languages which converts
-the language to the PRISM IR.
-
-Figure~\ref{fig:Architectur_prism1}~\cite{thesis_v} shows a block diagram of various PRISM components. IR generator generates independent intermediate representation of the program to be 
-analyzed. The generated analyzer takes IR as an input and produces output reports.
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(-20,15)(100,80)
-\psframe(-35,15)(115,80)
-\putnode{n1}{origin}{60}{70}{%
-	  {\textbf{Program}}
-     }
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{IR Generator}}
-
-\putnode{n3}{n2}{0}{-10}{%
-     {\textbf{Generated IR}}}
-
-\putnode{n4}{n3}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Generated analyzer}}
-
-\putnode{n5}{n4}{40}{0}{{\textbf{Results}}}
-
-\putnode{n6}{n4}{-55}{0}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
-
-\putnode{n8}{n6}{0}{15}{%
-     {Copied}}
-% \rput(55,33){\rnode{a}{Generated}}
-\putnode{n7}{n6}{-30}{0}{%
-      {\textbf{.klg files}}}
-
-\putnode{n8}{n6}{-30}{10}{%
-    {\textbf{.java files}}}
-\putnode{n9}{n7}{56}{-3}{%
-     {Generated}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n6}{n4}
-\ncline{->}{n7}{n6}
-% \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
-\nccurve[angleA=10, angleB=150, ncurv=0.4]{->}{n8}{n4}
-     
-\end{pspicture}
-\caption[Architecture of PRISM]{Architecture of PRISM}
-   \label{fig:Architectur_prism1}
-\end{figure}
-
-
-
-\subsubsection{Accessing statements in PRISM IR}
-Each function in the program is represented by an \texttt{IRObject}. Each \texttt{IRObject} is associated with an instance of \texttt{ICFG} (represents control flow graph of that function).
-An \texttt{ICFG} contains a list of \texttt{ICFGnodes} which represents one statement in a program. It also contains a pointer to the entry \texttt{ICFGnode} of that function.
-Each \texttt{ICFGnodes} stores a list of its successor and predecessor. Between two \texttt{ICFGnodes}, there is an \texttt{ICFGEdge} which can be either data flow or
-control flow edge. An array of \texttt{IRObjects}, representing all functions in a program, is provided by PRISM API. If an \texttt{ICFGnode} represents a
-function call, an API over it can be used to get \texttt{ICFG} of the function that is called.
-
-\subsubsection{Interpreting statements in PRISM IR}
-Each \texttt{ICFGNode} represents a statement in PRISM IR. The \texttt{ICFGNode} is associated with an instance of \texttt{Epxr} which represents the expression of the 
-statement. \texttt{Expr} is a base type and can be many of its subtypes. Some possible subtypes are: 
-\begin{itemize}
- \item Unary
- \item Binary
- \item Call
- \item Return Statement
-\end{itemize}
-
-
-An expression is composed of a tree structure of operands and operators. Each expression type has API function to access operators and operands. 
-A variable in an expression is represented using an instance of \texttt{NamedEntity}. A \texttt{NamedEntity} cantains various properties of the variable, such as name, 
-scope, data type etc. Various API functions are available to determine the type of the \texttt{NamedEntity}, such as pointer, static etc. Unlike variables, 
-\texttt{NamedEntity} can have expression like structure. Following are the types of \texttt{NamedEntities}:
-\begin{itemize}
- \item \texttt{STNamedEntity} : ST stands for Symbol Table. It returns variables used in the program.
- 
- e.g. In the expression ``\texttt{a=b+c}'', a, b and c are of type \texttt{STNamedEntity}
- 
- \item \texttt{PSTNamedEntity} : A part of  \texttt{STNamedEntity} is represented by \texttt{PSTNamedEntity}
- 
-  e.g. In the expression ``\texttt{x.y=a[0]}'', \texttt{a.b} is a \texttt{PSTNamedEntity} which is a part of \texttt{STNamedEntity} \texttt{a}
- 
- \item \texttt{IndirectNamedEntity} : \texttt{NamedEntity} to represent dereference. 
- 
- e.g. In the expression ``\texttt{int *p}'', \texttt{*p} is a \texttt{IndirectNamedEntity}. 
- 
- \item \texttt{PIndirectNamedEntity} : A part of another \texttt{IndirectNamedEntity} is represented by \texttt{PIndirectNamedEntity}. In the following example $x \rightarrow y$ is a part 
- of \texttt{IndirectNamedEntity} which is represented by \texttt{PIndirectNamedEntity}
- 
-e.g. \texttt{x $\rightarrow$ y= a[0]}
- 
- 
- \item \texttt{HeapNamedEntity} : During dynamic allocation \texttt{HeapNamedEntity} is created. Each heap location is assigned a unique number according to the line number where
- \texttt{malloc} or \texttt{calloc}  is used. 
- 
-e.g. \texttt{p =(float *) malloc(sizeof(float));}
- 
- 
- \item \texttt{PHeapNamedEntity} : A part of \texttt{HeapNamedEntity} is represented by \texttt{PHeapNamedEntity}. In the following example $p \rightarrow q$ represents a part of \texttt{HeapNamedEntity}
- 
-e.g. \texttt{p = (float *) malloc(sizeof(float));}
-
-\hspace{8mm}\texttt{p $\rightarrow$ q  = a[0] ;}
-
-\item \texttt{EnumlitNamedEntity} : \texttt{NamedEntity} to represents a value of enum type
-
-\item \texttt{AddressNamedEntity} : An address data item is represented by \texttt{AddressNamedEntity}. In the following example \&b represents an \texttt{AddressNamedEntity}
-
-e.g. \texttt{a = \&b;}
-
-\item \texttt{SizeofNamedEntity} : It represents use of sizeof operator
-
-\item \texttt{StructNamedEntity} : String literal is represented by \texttt{StructNamedEntity}. In the following example ``Hello world'' is a \texttt{StructNamedEntity}
-
-e.g. \texttt{string c* =``Hello world'';}
-
-\item \texttt{LabelNamedEntity} : A label in a program is represented by \texttt{LabelNamedEntity}. In the following goto statement, a \texttt{LabelNamedEntity} is created for the label begin
-
-e.g. \texttt{goto begin;}
-
-
-\item \texttt{ArrayindexNamedEntity} : An expression where an array is indexed is represented by \texttt{ArrayindexNamedEntity}. In the following example a[0] is a 
-\texttt{ArrayindexNamedEntity}
-
-e.g. \texttt{q = a[0];}
-
-\item \texttt{NullNamedEntity} : If a pointer is made to point to address 0 then it is represented by \texttt{NullNamedEntity}
-\item \texttt{FunctionnameNamedEntity} : A function name is represented by \texttt{FunctionnameNamedEntity}
-\item \texttt{UndefinedNamedEntity} : If a variable is undefined then the value represented by that variable is \texttt{UndefinedNamedEntity}
-
- %%copy from vinit's report
- 
- 
-\end{itemize}
-
-
-\section{Structure of analyser generator}
-An analyser writer needs to write two following components:
-\begin{itemize}
- \item Kulang specifications~\cite{prism}
- \item Data flow analysis API class
-\end{itemize}
-
-
-\subsection{Kulang specifications}
-While analyzing a program, Intraprocedural Control Flow Graph (ICFG) is created for each function. For each function in ICFG, GEN and KILL summary is computed.
-The specification for computing GEN and KILL summary is specified using Kulang query files. A kulang query file has ``\textbf{.klg}'' extension.
-The query file consists of a Kulang query to be solved. The file is organized in the following way:
-\begin{itemize}
- \item Package declaration : This is the first line in the kulang file. It tells the Kulang compiler to put the generated Java files into the specified package, for
- all the queries written in the file.
-
- Syntax :
- 
-\hspace{15mm}\textit{package identifier}
-
-\hspace{15mm} For e.g. \texttt{package darpan.klgLib;}
-
-\item Typedef :\newline 
-Syntax : 
-
-\hspace{15mm}\textit{TypeName::Type}
-
-\hspace{15mm}For e.g. \texttt{tup::tuple(int,NamedEntity);}
-
-\item Use declaration : The ``use'' declaration is used when the user wants to use/call other Kulang queries from other packages.
-It is similar to ``\texttt{import}'' statement in java. There are two following types:
-	\begin{itemize}
-	\item \texttt{fun\_use} : This defines the path from where the query generated Java files should be accessed
-			  \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{fn\_use identifier;}
-					    
-					    \hspace{15mm} For e.g. \texttt{fn\_use darpan.klgLib;}
-	\item \texttt{java\_use} : It specifies the class file where Java files accessed in this query are present. It is followed by java
-	decl, which specifies the Java functions used from the file specified in \texttt{java\_use}
-	 \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{java\_use identifier;}
-						    
-					    \hspace{15mm} \textit{java\_decl} 
-
-					    \hspace{15mm} \textit{type function ;}
-
-					    \hspace{15mm} For e.g. \texttt{java\_use darpan.klgLib.Aux;}
-					    
-					    \hspace{31mm}\texttt{java\_decl}
-					    
-    					    \hspace{30mm} \texttt{int print\_set(set NameEntity);}
-
-	\end{itemize}
-
-	
-\item Mode : Mode is defined as follow. FLA stands for Function Level Analysis.
-
- Syntax : 
-			  
-		\hspace{15mm} \texttt{[FLA];}
-		
-\item Lattice Type : Type of the elements in lattice. Two following types are possible:
-
-\begin{itemize}
-	\item Forward lattice : Used in forward analysis
-			  \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{Forwardlattice IDENT::typedef;}
-					    
-					    \hspace{15mm} For e.g. \texttt{Forwardlattice L::tup;}
-	\item Backward lattice : Used in backward analysis
-	 \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{Backwardlattice IDENT::typedef;}
-						    
-					    \hspace{15mm} For e.g. \texttt{Backwardlattice L::tup;}
-
-					   
-	
-\end{itemize}
-
-\item  Top : Top of the lattice for data flow analysis. Type of the Expr should be compatible with the type of lattice element given in the Lattice Specification. Following are the types
-\begin{itemize}
-	\item Forward top : top of forwardlattice
-			  \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{ForwardTop::Expr;}
-					    
-					    \hspace{15mm} For e.g. \texttt{ForwardTop::(tup){};}
-	\item Backward top : top of backwardlattice
-	 \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{BackwardTop::Expr;}
-						    
-					    \hspace{15mm} For e.g. \texttt{BackwardTop::(tup){};}
-
-					   
-\end{itemize}
-
-\item Meet : specifies the meet operation to be performed at the merge of two paths. Following are the types:
-\begin{itemize}
-	\item Forward meet : meet operation for forward analysis
-			  \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{IDENT ForwardMeet IDENT : Expr;}
-					    
-					    \hspace{15mm} For e.g. \texttt{A ForwardMeet B : A+B;}
-	\item Backward meet : meet operation for backward analysis
-	 \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{IDENT BackwardMeet IDENT : Expr;}
-					    
-					    \hspace{15mm} For e.g. \texttt{A BackardMeet B : A+B;}
-
-					   
-\end{itemize}
-
-\item Boundary values : It gives the starting value to solve the Data Flow problem.The
-Program Entry ( in case of a Forward Problem ) / Program Exit ( in case of a Backward
-Problem ) node will be initialized with this value.
-\begin{itemize}
-	\item Forward boundary value : boundary value for forward analysis
-			  \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{ForwardBoundaryValue : Expr;}
-					    
-					    \hspace{15mm} For e.g. \texttt{ForwardBoundaryValue :(tup){};}
-	\item Backward boundary value : boundary value for backward analysis
-	 \newline Syntax : 
-			  
-					    \hspace{15mm} \textit{BackwardBoundaryValue : Expr;}
-					    
-					    \hspace{15mm} For e.g. \texttt{BackwardBoundaryValue :(tup){};}
-
-					   
-\end{itemize}
-
-\item Flow functions : It defines how data flow value changes when it passes through a node or edge. The specific node or edge is available to the function as a parameter.
-Four types of flow function exits - \texttt{ForwardNodeflow}, \texttt{BackwardNodeFlow}, \texttt{ForwardEdgeFlow} and \texttt{BackwardEdgeFlow}
-\newline Syntax for flow functions:
-\begin{itemize}
- \item 
-%  \begin{lstlisting}[]  % Start your code-block
-
-\textit{Forward/BackwardNodeflow(IDENT:nodeType, IDENT:LatticeType)}
-
-\textit{let}
-
-\hspace{10mm} \textit{Expressions;}
-
-\textit{in}
-
-\hspace{10mm}\textit{Return variable;}
-% \end{lstlisting}
- 
- \item
-%  \begin{lstlisting}[]  % Start your code-block
-
-\textit{Forward/BackwardEdgeflow(IDENT:nodeType, IDENT:LatticeType)}
-
-\textit{let}
-
-\hspace{10mm}\textit{Expressions;}
-
-\textit{in}
-
-\hspace{10mm}\textit{Return variable;}
-% \end{lstlisting}
   
-\end{itemize}
-
-\end{itemize}
-
-\subsubsection{Kulang Constructs}
-\begin{itemize}
- \item Types : It supports standard data types such as int, char, string etc, IR model types and JAVA methods that operate over those types.
- Type casting is also supported in kulang specifications.
- 
- \item Constants : PRISM allows usual constants for standard types,such as  NULL, true, 1, ‘a’ etc.
- \item Expressions : Expressions are bound to identifiers. Contional expressions are also allowed.
- 
- For e.g.
- \begin{lstlisting}[]  % Start your code-block
-   
-   x=if(condition)
-     then
-	  expression1
-     else
-	  expression2
-     endif;
- 
-\end{lstlisting}
-
-\item Tuples : It is collection of data items of same or different data types.
-
-For e.g.
- \hspace{15mm} \texttt{Tuple=[Expr1,Expr2];}
- 
-\item Set : It is a collection of data items of same data type.
-
-For e.g.
- \hspace{15mm} \texttt{Set=\{a,b\};}				    
-
- \item Iterations : Consider an example as shown below, x takes each element in S and check for the condition after \textbf{`\textbar'}.
- If it satisfies the condition then that element is returned and store it in \texttt{newSet}. 
- 
- For e.g.
- \hspace{15mm} \texttt{newSet = \{x$\leftarrow$S\hspace{1mm} \textbar \hspace{1mm} condition \};}
- 
- \item Accumulation : Consider an example as shown below, \textbf{a} is an accumulator which is initialized to an empty set. \textbf{`x'}
- takes each element in \textbf{`S'}. Operation is performed on \textbf{`x'} and then the result is added to the accumulator.
- 
- For e.g.
- 
-  \texttt{newSet= <<a :(set NamedEntity)\{\}; x$\leftarrow$A; a+\{operation\}>>;}
-\end{itemize}
-
-
-
-
-
-\begin{comment}
-The existing version of kulang specifications of a data flow analysis consist of specifying:
-\begin{itemize}
- \item Lattice type : declare the data type of the lattice cell of the analysis
- \item Meet function : If meet function are set functions like union, intersection, then they can be specified using predefined functions. Otherwise, meet functions must
-need to be define manually
-  \item Top element and boundary values : A top and boundary value needs to be specified and they must be of same type as the type of lattice
-  \item Flow functions : A flow functions can be written for each type of statements in IR. A default flow function should be present so that it can execute if no flow function is written
-  for a particular statement
- \end{itemize}
- 
- The kulang compiler reads these specifications and generates the following java classes :
- \begin{itemize}
-  \item kulang\_Flow : This class contain implementation of forward or backward flow functions. It is generated for each .klg file in the specifications
-  \item kulang\_Meet : This class contains implementation of meet function. This class can be also overridden by user supplied meet. It is generated
-for each .klg file in the specifications
-\item Other auxiliary classes : These classes implement some utility functions which are used by the generated analyzer
- \end{itemize}
 \end{comment}
- 
- 
- 
- 
- 
- 
-\subsection{Data flow analysis API class}
-This class contains functions to invoke the execution of the analysis. It also provides an API to get results of the analysis. It can be
-accessed by user to get data flow values at some program point. It can also be use while solving a data flow problem dependent on the implemented
-data flow problem. 
-
-Figure~\ref{fig:generated_analyser} shows an architecture of generated analyzer. The solver takes data flow analysis API class, functions generated by kulang compiler and some utility functions provided
-by PRISM framework as input and generates a result.
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(-20,10)(105,80)
-\psframe(-20,10)(105,80)
-
-\putnode{n2}{origin}{45}{30}{%
-     \psframebox[linewidth=.3,framesep=5.7]{Solver}}
-\putnode{n1}{n2}{-40}{0}{%
-     \textbf{Generated IR}}
-
-
- \putnode{n3}{n2}{40}{0}{%
-      \textbf{Result}}
-
- \putnode{n4}{n2}{-40}{30}{%
-      \psframebox[linewidth=.3,framesep=1.7]{\begin{tabular}{c}
-                                             Generated \\
-                                             files by \\
-                                             kulang compiler
-                                             \end{tabular}
-}}
-
- \putnode{n5}{n2}{0}{30}{%
-      \psframebox[linewidth=.3,framesep=1.7]{Utility functions}}
- 
-\putnode{n6}{n2}{40}{30}{%
-      \psframebox[linewidth=.3,framesep=1.7]{\begin{tabular}{c}
-                                             Data flow \\
-                                             analysis API
-                                             \end{tabular}
-}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n4}{n2}
-\ncline{->}{n5}{n2}
-\ncline{->}{n6}{n2}  
-\end{pspicture}
-\caption[Block diagram of solver]{Architecture of analyzer generator}
-   \label{fig:generated_analyser}
-\end{figure}
-
-
-\subsection{Running the generated analyser}
-The steps for configuring and running the analyzer are given in the Appendix~\ref{ap:A}.
-
-\subsection{Limitations in current version of PRISM}
-This section describes some imitations in current version of PRISM. Some of which we are trying to overcome in our implementation.
-Following are some of the limitations :
-\begin{itemize}
- \item It does not support Incremental data flow analysis
- \item Meet function needs to be explicitly specified in kulang specifications or defined as a java function. The meet function can be inferred from
-the lattice of the data flow problem
-\item There is no proper way to debug the kulang specifications
- \item Very hard to understand the specification language
-
-\end{itemize}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Liveness Based Reaching Definition Analysis using PRISM}
-
-In order to understand PRISM, we have implemented a query for Intra-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
-implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
-Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
-liveness.
-
-\section{Intra-procedural reaching definition analysis}
-This section describes the flow functions for Intra-procedural reaching definition analysis.
-The Data flow equations for Reaching Definition analysis is shown below:
-
-\begin{equation}
-\begin{split}
-\mbox{\textit{In}}_n &= \left\{ \begin{array}{ll}
-	  \mbox{\textit{BI}} & \mbox{n is Start block}\\
-	  \bigcup\limits_{p \in pred(n)} Out_p & \mbox{otherwise}
-	  \end{array} \right.\\ 
-\mbox{\textit{Out}}_n &= \mbox{\textit{Gen}}_n \cup (\mbox{\textit{In}}_n - \mbox{\textit{Kill}}_n) \\
-\mbox{\textit{BI}} &= \{d_x : x = \mbox{\textit{undef}} \mid x \in \mbox{\textit{Var}}\} \\
-\end{split} 
-\end{equation}
-  
-Flow function for binary statements in shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
-directly propagates the values at the IN of that node. First we find the NE present in the expression (line no.4-6). `\texttt{line}'
- function at line 7, returns the line number of the statement. `\texttt{kill}' set at line 8 contains the set of elements that need 
- to be removed from the set of data flow values reaching at that node. `\texttt{HasElement}' is a function(as shown below) defined in
-`\textbf{Aux.java}' file, it takes \texttt{NamedEntity} and set of tuples as a parameter, and returns a set of tuples whose \texttt{NamedEntity} is same
-as that of the \texttt{NamedEntity} present in the \texttt{lhs} of the statement. `\texttt{def}' set contains the definition defined at that node.
-
-
-\begin{lstlisting}[]  % Start your code-block
-
-1. ForwardNodeflow( n: Binary, S: L )
-2.     if(operator(n) == '=') then   
-3.        let        
-4.                rt_expr = rhs(n);
-5.                l_exp = lhs(n);
-6.                ne = NE(n);
-7.                line_no = line(l_exp);
-8.                kill = HasElement(ne,S); 
-9.                def = {[line_no,ne]};
-10.       in
-11.       	  (S-kill)+def        
-12.       else
-13.        	  S
-14.       endif;
-\end{lstlisting}
-
-Following is a code for \texttt{unary} statements. Similarly, it will generate a `\texttt{kill}' set by using a function `\texttt{HasElement}' 
-. \texttt{def} contains a definition defined at that node. Statement \texttt{`(S-kill)+def'}, will calculate the values at the OUT of that
-node.
-\begin{lstlisting}[]
-15. ForwardNodeflow( n: Unary, S: L )
-16.	let
-17.		ne = NE(n);
-18.		line_no = line(n);
-19.		kill = HasElement(ne,S);
-20.		def = {[line_no,ne]};
-21.	in
-22.		(S-kill)+def;
-\end{lstlisting}
-
-For other types of statements, it will just propagates the values reaching at the In of that node to its OUT. Following in the code.
-
-\begin{lstlisting}[]
-23. ForwardNodeflow( n: _, S: L ) 
-24.	S;
-\end{lstlisting}
-
-Java code for function `\texttt{HasElement}' is shown below :
-\begin{lstlisting}
-1. static Set HasElement(NamedEntity ne , Set info_in)
-2. {
-3.	int no_ele;
-4.	Set ret= new HashSet();
-5.	no_ele=info_in.nElems();
-6.	Enumeration en=info_in.Enumerate();
-7.	while(en.hasMoreElements())
-8.	{
-9.		Tuple t=(Tuple)en.nextElement();
-10.		if(t.AtIndex(1).equals(ne))
-11.			ret.insert(t);
-12.	}	
-13.
-14.	return ret;
-15. }
-
-\end{lstlisting}
-
-\section{Liveness-Based Intra-procedural reaching definition analysis}
-This section describes the flow functions for Liveness-Based Intra-procedural reaching definition analysis. This is a bi-directional
-analysis and hence flow function will take two lattices \texttt{R} and \texttt{L} as a parameter. Lattice \texttt{R} is for reaching definition analysis and
-\texttt{L} is for strongly liveness analysis. In first phase, it will do strongly liveness analysis which is a backward flow analysis.
-Data flow equations for liveness-Based reaching definition analysis in shown below. The reaching definition sets (\textit{RIn}$_n$ and \textit{ROut}$_n$) are restricted 
-to liveness set (\textit{LIn}$_n$ and \textit{LOut}$_n$)
-
-\begin{equation}
-\begin{split}
-\mbox{\textit{LIn}}_n &= f_n(\mbox{\textit{Out}}_n) \\
-\mbox{\textit{LOut}}_n &= \left\{ \begin{array}{ll}
-	  BI & \mbox{n is End}\\
-	  \bigcup\limits_{s \in succ(n)} In_s & \mbox{otherwise}
-	  \end{array} \right.\\ 
-\mbox{where,}\\
-f_n(X) &= \left\{ \begin{array}{ll}
-	  (X-\{y\})\cup(\mbox{\textit{Opd(e)}}\cap \mbox{\textit{Var}}) & \mbox{n is y = e, e $\in$ Expr, y $\in$ X}\\
-	  X-{y} & \mbox{n is input(y)}\\
-	  X \cup {y} & \mbox{n is use(y)} \\
-	  X & \mbox{otherwise}
-	  \end{array} \right.\\ 
-\\
-\mbox{\textit{RIn}}_n &= \left\{ \begin{array}{ll}
-	  \mbox{\textit{RBI}} & \mbox{n is Start block}\\
-	  \bigcup\limits_{p \in pred(n)}Out_p\mid_{LIn_n} & \mbox{otherwise}
-	  \end{array} \right.\\ 
-	  \\
-\mbox{\textit{ROut}}_n &= \mbox{\textit{Gen}}_n \cup (\mbox{\textit{In}}_n - \mbox{\textit{Kill}}_n) \mid_{LOut_n} \\
-\\
-\mbox{\textit{RBI}} &= \{d_x : x = \mbox{\textit{undef}} \mid x \in \mbox{\textit{Var}}\} \\	  
-\end{split} 
-\end{equation}
-
-
-Flow function for \texttt{binary} statements is shown below. The set `\texttt{rNE}' at line 6, contains \texttt{NamedEntity} in rhs of the statement and `\texttt{lNE}' at line 7, contains
-\texttt{NamedEntity} in lhs of the statement. At line 8, if the statement contains ``$=$'' operator and variable in lhs is present at the OUT of node, then we will add
-all the variables used and remove the defined variable in the statement from the set `\texttt{x}'. Otherwise, we will add all the used variables in the set
-`\texttt{x}'.
-
-\begin{lstlisting}
-
-1. BackwardNodeflow( n: Binary, R: rec, L: Liv )
-2.        let
-3.                
-4.                rt_expr=rhs(n);
-5.                lt_expr=lhs(n);
-6.                rNE=getNEs(rt_expr);
-7.                lNE=getNEs(lt_expr);
-8.                x = if(operator(n)=='=')
-9.                        then
-10.                                if(isLive(lt_expr,L)==true)
-11.                                        then
-12.                                                (L - lNE) + rNE
-13.                                        else
-14.                                                L
-15.                                endif
-16.                        else
-17.                                ( L + lNE ) + rNE
-18.	                   endif;
-19.        in
-20.                x;
-
-\end{lstlisting}
-
-
-Flow function for \texttt{unary} statements is given below. At line 23, \texttt{operands\_ne} contains the \texttt{NamedEntities} of all the variables used in the 
-statement. At line 25, variables which are used in the statement are added to the Liveness set `L'.
-
-\begin{lstlisting}
-21. BackwardNodeflow( n: Unary, R: rec, L: Liv )
-22.        let
-23.                operands_ne=getNEs(n);
-24.        in
-25.                L+operands_ne;
-
-\end{lstlisting}
-
-Flow function for \texttt{Call} statements is given below. At line 29, \texttt{UseInCall} contains \texttt{NamedEntities} of all the variables present in call
-statement. At line 31, the used variables are added to the Liveness set.
-
-\begin{lstlisting}
-26. BackwardNodeflow( n: Call, R: rec, L: Liv )
-27.        let
-28.                d = emptySet();
-29.                UseInCall = getNEsFromCall(n);
-30.        in
-31.                d + L + UseInCall
-\end{lstlisting}
-
-Flow function for other types of nodes is shown below.
-
-\begin{lstlisting}
-32. BackwardNodeflow( n: _, R: rec, L: Liv)
-33.        L;
-\end{lstlisting}
-
-
-After computing liveness set as discussed above, based on that set reaching definition is performed. Here we will compute reaching definition of those
-variables which are live at the IN of that node. This is a forward flow analysis.
-
-Flow function for \texttt{binary} statements is shown below. At line 39, \texttt{line\_no} will contain the line number of the statement. At line 40,
-\texttt{kill} set will contain \texttt{NamedEntity} of all the values at the IN of node whose \texttt{NamedEntity} is same as that of the variable defined at the statement.
-At line 41, \texttt{sur} will contain the computed data flow value at the node. From line 43 to 49, if statement contains ``='' operator then it will 
-check whether the value which is defined is live or not, otherwise it will propagate only those values which is live at the IN of that node. Function
-\texttt{removeNonLive} checks the liveness of the variable defined at the node. If the variable is live then add the definition to the reaching set.
-
-\begin{lstlisting}
-34. ForwardNodeflow( n: Binary, R: rec , L:Live )
-35.        let
-36.                rt_expr=rhs(n);
-37.                l_exp=lhs(n);
-38.                ne=NE(n);
-39.                line_no=line(l_exp);
-40.                kill=HasElement(ne,R);
-41.                def={[line_no,ne]};
-42.                sur=(R-kill)+def;
-43.               survive=if(operator(n)=='=')
-44.                        then
-45.                                removeNonLive(sur,L)
-46.                        else
-47.                                removeNonLive(R,L)
-48.
-49.                        endif;
-50.        in
-51.                survive;
-\end{lstlisting}
-
-Following is the flow function for \textbf{unary} statements. At line 60, after computing the values at the node (55-59), if the variable is live at the IN of the node
-then we will add the definition of the variable defined at that not. 
-
-\begin{lstlisting}
-52. ForwardNodeflow( n: Unary, R: rec , L:Liv )
-53.        let
-54.                
-55.                ne=NE(n);
-56.                line_no=line(n);
-57.                kill=HasElement(ne,R);
-58.                def={[line_no,ne]};
-59.                sur=(R-kill)+def;
-60.		  survive=removeNonLive(sur,L);
-61.        in
-62.               survive;
-
-\end{lstlisting}
-
-Flow function for other types of statements is given below.
-
-\begin{lstlisting}
-63. ForwardNodeflow( n: _, R: rec , L:Liv)
-64.        let
-65.                survive=removeNonLive(R,L);
-66.        in
-67.                survive;
-
-\end{lstlisting}
-
-Following is the Java code for function `\texttt{isLive}' 
-\begin{lstlisting}
-1.static boolean isLive(Expr ex,Set s)
-2.{
-3.      try
-4.      {
-5.	  Ident_AST iast = (Ident_AST) ex.operands().getAt(0);
-6.	  NamedEntity ne = iast.NE();
-7.	  if(s == null)
-8.		return false;
-9.	  if(s.belongs(ne))
-10.		return true;
-11.	  else
-12.		return false;
-13.      }
-14.      catch(Exception e)
-15.      {
-16.	  return true;
-17.       }
-18.}
-\end{lstlisting}
-
-
-\section{SPEC Benchmark Evaluation}
-In order to compare the performance between two analysis i.e. reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
-For each query, we measured the average size of the set of data flow values computed at each program point. In general, average size of the set at each
-program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
-
-Performance measurement of reaching definition without liveness is shown in table~\ref{tab:performance_without_l}.
-\begin{table}[H]
-  \begin{center}
-      %\label{tab:Available_exp}
-    \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
-    \hline
-%        & \multicolumn{2}{c}{$a+b$} & \multicolumn{2}{c}{$a*b$} & \multicolumn{2}{c}{$a*c$} \\
-%     \hline
-      Name & No. of Basic Blocks & Avg. values at Entry (in \%) & Avg. values at Exit (in \%) & Total values (in \%)\\
-      \hline
-%    	\midrule
-   	  bzip2 & 8004 & 26.878 & 26.826 & 26.852 \\ \hline
-   	  mcf & 1066 & 3.991 & 4.001 & 3.996 \\ \hline
-   	  hmmer & 24996 & 2.574 & 2.566  & 2.570 \\ \hline
-   	  sjeng & 10892 & 39.219 & 39.245 & 39.232 \\ \hline
-   	  h264ref & 42559 & 6.370 & 6.225 & 6.297\\ \hline
-   	  lbm & 603 & 6.515 & 6.537 & 6.526\\ \hline
-   	  
-	\hline
-%       \bottomrule 
-    \end{tabular}
-    \caption{Benchmark results for normal reaching definition analysis.}
-      \label{tab:performance_without_l}
-  \end{center}
-\end{table}
-
-
-
-The performance measurement of reaching definition with liveness is shown in table~\ref{tab:performance_with_l}.
-\begin{table}[H]
-  \begin{center}
-      %\label{tab:Available_exp}
-    \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
-    \hline
-%        & \multicolumn{2}{c}{$a+b$} & \multicolumn{2}{c}{$a*b$} & \multicolumn{2}{c}{$a*c$} \\
-%     \hline
-      Name & No. of Basic Blocks & Avg. values at Entry (in \%) & Avg. values at Exit (in \%) & Total values (in \%)\\
-      \hline
-%    	\midrule
-   	  bzip2 & 8004 & 4.852 & 4.570 & 4.711 \\ \hline
-   	  mcf & 1066 & 0.724 & 0.666 & 0.695 \\ \hline
-   	  hmmer & 24996 & 0.672 & 0.636  & 0.654 \\ \hline
-   	  sjeng & 10892 & 3.685 & 3.466 & 3.576 \\ \hline
-   	  h264ref & 42559 & 5.321 & 5.197 & 5.259\\ \hline
-   	  lbm & 603 & 1.633 & 1.600 & 1.616\\ \hline
-   	  
-	\hline
-%       \bottomrule 
-    \end{tabular}
-    \caption{Benchmark results for liveness-based reaching definition analysis.}
-      \label{tab:performance_with_l}
-  \end{center}
-\end{table}
-
-
-Figure~\ref{fig:bench_mark} shows a comparision between two analysis.
-\begin{figure}[p]
-\centering
-\includegraphics[width=0.8\textwidth]{graph.eps}
-\caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
-\label{fig:bench_mark}
-\end{figure}
-
-\section{Summary}
-We have implemented a query for reaching definition analysis with and without liveness using PRISM. Other queries which are 
-implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing
-and Strong liveness analysis with aliasing. 
-
-In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
-For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
-point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Future Work}
- 
-This report describes the method of doing incremental analysis in bit-vector framework. This method performs incremental analysis for a single change in a program
-but in general multiple changes are also possible, so we need a method which can also perform incremental analsis for multiple changes.
-It also describes some issues in doing incremental analysis in Constant propagation. In Consant propagation we need to create affected region for almost all the cases.
-We may restrict the size of the affected region even if we cannot avoid it. We need some method so that we can restrict the size of the affected region which will be one 
-of our future work.
-
-Current PRISM framework supports context sensitive bi-directional analysis. Incremental analysis is not yet implemented in current framework. As a part
-of first stage of the project, queries for both reaching definition analysis with and without liveness have been implemented.
-
-The current specification does not allow the user to specify data flow variables and equations as seen in literature. It places contraints on the type of analysis 
-defined. It allows those analysis which has single data flow variable. Therefore, the anlysis writer needs to convert multi-variable equation to single-variable 
-equation which is an extra work done by the writer. The specifications can be extended to allow analysis containig multiple variables.
-
-
-
+%  
+% This report describes the method of doing incremental analysis in bit-vector framework. This method performs incremental analysis for a single change in a program
+% but in general multiple changes are also possible, so we need a method which can also perform incremental analsis for multiple changes.
+% It also describes some issues in doing incremental analysis in Constant propagation. In Consant propagation we need to create affected region for almost all the cases.
+% We may restrict the size of the affected region even if we cannot avoid it. We need some method so that we can restrict the size of the affected region which will be one 
+% of our future work.
+% 
+% Current PRISM framework supports context sensitive bi-directional analysis. Incremental analysis is not yet implemented in current framework. As a part
+% of first stage of the project, queries for both reaching definition analysis with and without liveness have been implemented.
+% 
+% The current specification does not allow the user to specify data flow variables and equations as seen in literature. It places contraints on the type of analysis 
+% defined. It allows those analysis which has single data flow variable. Therefore, the anlysis writer needs to convert multi-variable equation to single-variable 
+% equation which is an extra work done by the writer. The specifications can be extended to allow analysis containig multiple variables.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
