@@ -1537,13 +1537,12 @@ The Data flow equations for Reaching Definition analysis is shown below:
 \end{split} 
 \end{equation}
   
-Flow function for binary statements in shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
+Flow function for binary statements is shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
 directly propagates the values at the IN of that node. First we find the NE present in the expression (line no.4-6). `\texttt{line}'
  function at line 7, returns the line number of the statement. `\texttt{kill}' set at line 8 contains the set of elements that need 
  to be removed from the set of data flow values reaching at that node. `\texttt{HasElement}' is a function(as shown below) defined in
 `\textbf{Aux.java}' file, it takes \texttt{NamedEntity} and set of tuples as a parameter, and returns a set of tuples whose \texttt{NamedEntity} is same
 as that of the \texttt{NamedEntity} present in the \texttt{lhs} of the statement. `\texttt{def}' set contains the definition defined at that node.
-
 
 \begin{lstlisting}[]  % Start your code-block
 
@@ -1786,7 +1785,8 @@ Following is the Java code for function `\texttt{isLive}'
 \section{SPEC Benchmark Evaluation}
 In order to compare the performance between two analysis i.e. reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
 For each query, we measured the average size of the set of data flow values computed at each program point. In general, average size of the set at each
-program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis. However, PRISM solver is not including local
+and global declarations as a statement and thus there is a possibility that the results from the benchmark may not concur with the actual numbers.
 
 Performance measurement of reaching definition without liveness is shown in table~\ref{tab:performance_without_l}.
 \begin{table}[H]
@@ -1843,7 +1843,7 @@ The performance measurement of reaching definition with liveness is shown in tab
 \end{table}
 
 
-Figure~\ref{fig:bench_mark} shows a comparision between two analysis.
+Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
 \begin{figure}[p]	
 \centering
 \includegraphics[width=0.8\textwidth]{graph.eps}
@@ -1857,21 +1857,24 @@ implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liven
 and Strong liveness analysis with aliasing. 
 
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
-For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
-point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+For each query we measured the average size of the set at each program point. It is observed that the average size of the set at each program 
+point in liveness-based analysis is much smaller than that of the normal reaching definition analysis with a possibility of the empirical
+values deviating from the actual values owing to non inclusion of the local and global statements.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental PRISM Solver}
-In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
+In this section, we describe implementation of the Incremental Solver. It is divided into the following parts:
 
 \begin{itemize}
-\item \textbf{Preprocessing} It detects changed program point by comparing old and new IR. It detects affected region,  a set of affected nodes and a set
-of affected boundary nodes.
+\item \textbf{Preprocessing} It reads the two IRs and finds the difference between them.
 
-\item \textbf{Computing data flow information}
-The solver computes data flow information only for the affected region. For each boundary node, it computes the data flow information and propagates
-them to its neighboring nodes.
+\item \textbf{Data flow computation}
+It consist of following two parts:
+\begin{itemize}
+ \item \textit{Re-initialization} which constructs the affected region.
+ \item  \textit{Re-computation} which identifies boundary nodes and computes the information only for the affected region (set of affected node).
+\end{itemize}
 
 \item \textbf{Update} Merges the computed information for the affected region with the old information.
 
@@ -1993,23 +1996,35 @@ consists of following parts:
 
 \section{Assumptions and Limitation }
 
-The assumptions that we make are as follows:
+The assumptions that we make are listed with the corresponding justifications as follows:
 \begin{itemize}
-\item There is no structural change in the graph.
-\item Pointer information will remain same,
-\item There is no change in the context information.
-\item Declaration of variables haven't change.
-\item A name can refer to a single variable in a program at any given program point.
-\item The past information is stored flow sensitively.
+\item \textbf{Pointer information will remain same.}
+During runtime, a pointer may point to the heap and thus incrementally updating the pointer information would be complicated, which
+gives room to this simplifying assumption.
+\item \textbf{There is no change in the context information.}
+\item \textbf{Declarations of variables haven't change.}
+Change of declaration implies that there is a change in the lattice for that particular variable. For handling such changes, we need to 
+run exhaustive analysis, incremental analysis won't suffice.
+\item \textbf{There is no structural change in the graph.}
+The reason for making this simplifying assumptions is that the output from the old solver is read from a text file. If the output was
+serialized in form of PRISM objects, we could have handled structural changes as well.
+\item \textbf{A name can refer to a single variable in a program at any given program point.}
+\item \textbf{The past information is stored flow sensitively.}
+
+Violation of either of the above two assumption will necessitate another run of the exhaustive analysis.
 \end{itemize}
 
 
-The results from the old solver are stored in a text file, and not in serialized format as should be done ideally.
-However, under the above stated assumptions, the only limitation that stems from reading from a text file 
-is that the result is stored in a non standard format by the solver.
+The results from the old solver are stored in a text file, and not serialized into PRISM objects.
+This renders it impossible to deserialize the results from the old solver and to serialize our results back.
+Late discovery of this issue has prevented any corrective measures. 
+However, under the above stated assumptions, the only limitation that stems from reading from a
+text file is that the result is stored in a non standard format by the solver.
 
 
-
+\section{Performance Measurement}
+We had to artificially add the changes to check the performance of the Incremental Solver.
+Some of the test cases that we used to check the Incremental Solver are as follows:
 
 
 
@@ -2026,6 +2041,10 @@ In this chapter, we will discuss some of the issues in extending the existing In
 Analysis to a general framework by means of constant propagation analysis.
 
 
+\section{The Theory of Constant Propagation Analysis}
+Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
+with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
+to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
 
 \begin{figure}[H]
 \centering
@@ -2074,10 +2093,8 @@ Analysis to a general framework by means of constant propagation analysis.
    \label{fig:non_c_l}
 \end{figure}
 
-Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
-with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
-to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
 
+\subsection{Flow Functions}
 Following are the possible flow functions in Constant Propagation analysis:
 \begin{itemize}
 \item Top : It is similar to the raise function in bit-vector framework. It always results in Top value.
@@ -2129,7 +2146,7 @@ Following are the possible flow functions in Constant Propagation analysis:
 \end{figure}
 
  
-\subsection{Changes in Constant Propagation analysis}
+\subsection{Changes in Constant Propagation Analysis}
 In addition to the changes given in section \ref{sec:bit-vector}, a change from intermediate
 level to other levels is also possible.
 \begin{itemize}
@@ -2439,11 +2456,6 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
    \label{fig:inter_otherlevels}
 \end{figure}
 
-
-
-
-
-
 \section{Issues in incremental analysis in general framework}
 
 Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
@@ -2568,13 +2580,17 @@ immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is sa
    \label{fig:dominance_frontier}
 \end{figure}
 
-
-
-
-We first establish via an example that all the possible candidates of removal form a dominance frontier.
-We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
+We first illustrate via an example that dominance frontier nodes are a subset of the boundary nodes. 
+We then establish that all the possible candidates of removal form a dominance frontier.
 Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
 construction itself, without further delays.
+
+\paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
+Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
+then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
+We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
+Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
+
 \paragraph{Possible Removal Candidates Form a Dominance Frontier}
 Let us consider the example in figure~\ref{fig:incr_non-bit2}.
 Let the changed node be $n5$. The affected region (AR) will contain the nodes $n5, n6, n7, n3$ and $n4$ with the node 
@@ -2644,11 +2660,6 @@ We further note that the node $n3$ must be a dominance frontier of the change no
    \label{fig:incr_non-bit2}
 \end{figure}
 
-\paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
-Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
-then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
-We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
-Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
 
 \begin{figure}[!htb]
 \centering
@@ -2694,10 +2705,16 @@ Here $m$ is a boundary node but it is dominated by block $i$ and hence not its d
 \end{figure}
 
 
+\section{Reducing the size of the AR region}
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
 In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region.
+
+
+
+
+
 
 \begin{comment}
 \section{Incremental Analysis in Non Bit-vector Framework}
@@ -3226,6 +3243,12 @@ We have proposed a new idea for the optimization of affected region (AR). The id
 (can be fitted to both bit vector and general framework), and may lead to significant time savings when
 incorporated in the solver.
 
+Incremental analysis is a method of avoiding redundant analysis in the case when only a part of the program has changed.
+In this report, we discussed the theory and implementation of incremental analysis for bit-vector frameworks, and 
+proposed methods of extending it to general frameworks. The experiments on our test set have yielded motivating results, 
+with savings of up to X\% in terms of data flow information computed.
+We also sketch a number of possible improvements in the implementation that may add to the performance and scalability of
+the incremental solver.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
@@ -3314,11 +3337,11 @@ of another HashMap containing \emph{(contextId, data flow value)} pairs.
 
 
 
-% \begin{figure}
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/DFStore_C.eps}
-% \caption{Class Diagram for DFStore}
-% \label{fig:dfstore}
-% \end{figure}
+\begin{figure}
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/DFStore_C.eps}
+\caption{Class Diagram for DFStore}
+\label{fig:dfstore}
+\end{figure}
 
 
 \item \emph{ValueContexts}: This module holds information about contexts formed during the analysis.
@@ -3370,21 +3393,21 @@ The key value mapping for the data structure is,
 \emph{(caller context id, Call site) $\leftrightarrow $ callee context id}
 \newline
 \newline
-% \begin{figure}
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/ContextTransition_C.eps}
-% \caption{Class Diagram for ContextTransition}
-% \label{fig:contexttransition}
-% \end{figure}
+\begin{figure}
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/ContextTransition_C.eps}
+\caption{Class Diagram for ContextTransition}
+\label{fig:contexttransition}
+\end{figure}
 
 \item \emph{DFSolverLogger}: This module provides utilities for logging, measuring performance parameters of the core solver.
 \item \emph{InterproceduralWorklist}: This module manages work list and applies a priority scheme to the work list. The class diagram for this module is 
 shown in figure \ref{fig:interproceduralworklist}.
 
-% \begin{figure}[H]
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/InterproceduralWL_C.eps}
-% \caption{Class Diagram for Interprocedural work list}
-% \label{fig:interproceduralworklist}
-% \end{figure}
+\begin{figure}[H]
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/InterproceduralWL_C.eps}
+\caption{Class Diagram for Interprocedural work list}
+\label{fig:interproceduralworklist}
+\end{figure}
 
 \end{enumerate}
 

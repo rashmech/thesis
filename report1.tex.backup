@@ -1516,7 +1516,7 @@ the lattice of the data flow problem
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Liveness Based Reaching Definition Analysis using PRISM}
-\begin{comment}
+
 In order to understand PRISM, we have implemented a query for Inter-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
 implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
 Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
@@ -1537,13 +1537,12 @@ The Data flow equations for Reaching Definition analysis is shown below:
 \end{split} 
 \end{equation}
   
-Flow function for binary statements in shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
+Flow function for binary statements is shown below. Here, we are checking statements having `$=$' as an operator, otherwise we  
 directly propagates the values at the IN of that node. First we find the NE present in the expression (line no.4-6). `\texttt{line}'
  function at line 7, returns the line number of the statement. `\texttt{kill}' set at line 8 contains the set of elements that need 
  to be removed from the set of data flow values reaching at that node. `\texttt{HasElement}' is a function(as shown below) defined in
 `\textbf{Aux.java}' file, it takes \texttt{NamedEntity} and set of tuples as a parameter, and returns a set of tuples whose \texttt{NamedEntity} is same
 as that of the \texttt{NamedEntity} present in the \texttt{lhs} of the statement. `\texttt{def}' set contains the definition defined at that node.
-
 
 \begin{lstlisting}[]  % Start your code-block
 
@@ -1604,8 +1603,8 @@ Java code for function `\texttt{HasElement}' is shown below :
 
 \end{lstlisting}
 
-\section{Liveness-Based Intra-procedural reaching definition analysis}
-This section describes the flow functions for Liveness-Based Intra-procedural reaching definition analysis. This is a bi-directional
+\section{Liveness-Based Inter-procedural reaching definition analysis}
+This section describes the flow functions for Liveness-Based Inter-procedural reaching definition analysis. This is a bi-directional
 analysis and hence flow function will take two lattices \texttt{R} and \texttt{L} as a parameter. Lattice \texttt{R} is for reaching definition analysis and
 \texttt{L} is for strongly liveness analysis. In first phase, it will do strongly liveness analysis which is a backward flow analysis.
 Data flow equations for liveness-Based reaching definition analysis in shown below. The reaching definition sets (\textit{RIn}$_n$ and \textit{ROut}$_n$) are restricted 
@@ -1859,19 +1858,21 @@ and Strong liveness analysis with aliasing.
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
 For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
 point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
-\end{comment}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental PRISM Solver}
-In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
+In this section, we describe implementation of the Incremental Solver. It is divided into the following parts:
 
 \begin{itemize}
-\item \textbf{Preprocessing} It detects changed program point by comparing old and new IR. It detects affected region,  a set of affected nodes and a set
-of affected boundary nodes.
+\item \textbf{Preprocessing} It reads the two IRs and finds the difference between them.
 
-\item \textbf{Computing data flow information}
-The solver computes data flow information only for the affected region. For each boundary node, it computes the data flow information and propagates
-them to its neighboring nodes.
+\item \textbf{Data flow computation}
+It consist of following two parts:
+\begin{itemize}
+ \item \textit{Re-initialization} which constructs the affected region.
+ \item  \textit{Re-computation} which identifies boundary nodes and computes the information only for the affected region (set of affected node).
+\end{itemize}
 
 \item \textbf{Update} Merges the computed information for the affected region with the old information.
 
@@ -2004,9 +2005,11 @@ The assumptions that we make are as follows:
 \end{itemize}
 
 
-The results from the old solver are stored in a text file, and not in serialized format as should be done ideally.
-However, under the above stated assumptions, the only limitation that stems from reading from a text file 
-is that the result is stored in a non standard format by the solver.
+The results from the old solver are stored in a text file, and not serialized into PRISM objects.
+This renders it impossible to deserialize the results and to serialize our results back.
+Late discovery of this issue has prevented any corrective measures. 
+However, under the above stated assumptions, the only limitation that stems from reading from a
+text file is that the result is stored in a non standard format by the solver.
 
 
 
@@ -2017,12 +2020,19 @@ is that the result is stored in a non standard format by the solver.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental Analysis for General framework}
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
-Bit-Vector framework cover a relatively simpler case where the data flow information of 
-different entities is independent of each other.
+Bit-Vector frameworks cover a relatively simpler case where the data flow information of 
+different entities is independent of each other. In situations where the data flow information
+of entities is interdependent, a more general kind of flow functions are needed.
+The corresponding general frameworks are called \emph{non-separable}.
+
 In this chapter, we will discuss some of the issues in extending the existing Incremental 
 Analysis to a general framework by means of constant propagation analysis.
 
 
+\section{The Theory of Constant Propagation Analysis}
+Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
+with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
+to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
 
 \begin{figure}[H]
 \centering
@@ -2071,10 +2081,8 @@ Analysis to a general framework by means of constant propagation analysis.
    \label{fig:non_c_l}
 \end{figure}
 
-Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
-with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
-to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
 
+\subsection{Flow Functions}
 Following are the possible flow functions in Constant Propagation analysis:
 \begin{itemize}
 \item Top : It is similar to the raise function in bit-vector framework. It always results in Top value.
@@ -2126,7 +2134,7 @@ Following are the possible flow functions in Constant Propagation analysis:
 \end{figure}
 
  
-\subsection{Changes in Constant Propagation analysis}
+\subsection{Changes in Constant Propagation Analysis}
 In addition to the changes given in section \ref{sec:bit-vector}, a change from intermediate
 level to other levels is also possible.
 \begin{itemize}
@@ -2436,11 +2444,6 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
    \label{fig:inter_otherlevels}
 \end{figure}
 
-
-
-
-
-
 \section{Issues in incremental analysis in general framework}
 
 Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
@@ -2457,35 +2460,35 @@ Thus, the solution is to create an affected region for all kind of changes.
 \psset{unit=1mm}
 \begin{pspicture}(0,20)(100,90)
 % \psframe(0,20)(100,90)
-\putnode{n1}{origin}{40}{80}{%
+\putnode{n1}{origin}{30}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(30,80){\rnode{a}{n1}}
-\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+\rput(20,80){\rnode{a}{n1}}
+\rput(29,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(29,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n2}{n1}{40}{0}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(69,80){\rnode{b}{n2}}
-\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+\rput(59,80){\rnode{b}{n2}}
+\rput(70,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(70,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n3}{n1}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,65){\rnode{c}{n3}}
-\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(39,65){\rnode{c}{n3}}
+\rput(37,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n4}{n1}{20}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(49,50){\rnode{a}{n4}}
-\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+\rput(39,50){\rnode{a}{n4}}
+\rput(37,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
 
 \putnode{n5}{n1}{20}{-45}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,35){\rnode{a}{n5}}
-\rput(47,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
-\rput(47,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+\rput(39,35){\rnode{a}{n5}}
+\rput(37,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
+\rput(37,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
 
 \ncline{->}{n1}{n3}
 \ncline{->}{n2}{n3}
@@ -2565,13 +2568,17 @@ immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is sa
    \label{fig:dominance_frontier}
 \end{figure}
 
-
-
-
-We first establish via an example that all the possible candidates of removal form a dominance frontier.
-We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
+We first illustrate via an example that dominance frontier nodes are a subset of the boundary nodes. 
+We then establish that all the possible candidates of removal form a dominance frontier.
 Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
 construction itself, without further delays.
+
+\paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
+Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
+then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
+We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
+Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
+
 \paragraph{Possible Removal Candidates Form a Dominance Frontier}
 Let us consider the example in figure~\ref{fig:incr_non-bit2}.
 Let the changed node be $n5$. The affected region (AR) will contain the nodes $n5, n6, n7, n3$ and $n4$ with the node 
@@ -2585,47 +2592,47 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 \psset{unit=1mm}
 \begin{pspicture}(0,0)(100,90)
 % \psframe(0,20)(100,90)
-\putnode{n1}{origin}{40}{80}{%
+\putnode{n1}{origin}{30}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(30,80){\rnode{a}{n1}}
-\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+\rput(20,80){\rnode{a}{n1}}
+\rput(29,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(29,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n2}{n1}{40}{0}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=1$}}
-\rput(69,80){\rnode{b}{n2}}
-\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+\rput(59,80){\rnode{b}{n2}}
+\rput(70,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(70,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n3}{n1}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,65){\rnode{c}{n3}}
-\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(39,65){\rnode{c}{n3}}
+\rput(37,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n4}{n1}{20}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,50){\rnode{a}{n4}}
-\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(39,50){\rnode{a}{n4}}
+\rput(37,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n5}{n1}{20}{-45}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(49,35){\rnode{a}{n5}}
-\rput(47,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,30){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,35){\rnode{a}{n5}}
+\rput(37,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,30){\rnode{c2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n6}{n5}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,20){\rnode{c}{n6}}
-\rput(47,23){\rnode{c1}{\blue$\langle b=3 \rangle$}}
-\rput(47,16){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,20){\rnode{c}{n6}}
+\rput(37,23){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(37,16){\rnode{c2}{\blue$\langle b=3 \rangle$}}
       
 \putnode{n7}{n6}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,5){\rnode{c}{n7}}
-\rput(47,8){\rnode{c1}{\blue$\langle b=3 \rangle$}}
-\rput(47,1){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,5){\rnode{c}{n7}}
+\rput(37,8){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(37,1){\rnode{c2}{\blue$\langle b=3 \rangle$}}
 
 \ncline{->}{n1}{n3}
 \ncline{->}{n2}{n3}
@@ -2641,11 +2648,6 @@ We further note that the node $n3$ must be a dominance frontier of the change no
    \label{fig:incr_non-bit2}
 \end{figure}
 
-\paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
-Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
-then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
-We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
-Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
 
 \begin{figure}[!htb]
 \centering
@@ -2691,10 +2693,16 @@ Here $m$ is a boundary node but it is dominated by block $i$ and hence not its d
 \end{figure}
 
 
+\section{Reducing the size of the AR region}
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
 In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region.
+
+
+
+
+
 
 \begin{comment}
 \section{Incremental Analysis in Non Bit-vector Framework}
