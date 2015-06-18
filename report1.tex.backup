@@ -1516,7 +1516,7 @@ the lattice of the data flow problem
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Liveness Based Reaching Definition Analysis using PRISM}
-
+\begin{comment}
 In order to understand PRISM, we have implemented a query for Inter-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
 implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
 Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
@@ -1859,15 +1859,10 @@ and Strong liveness analysis with aliasing.
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
 For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
 point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
-
+\end{comment}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental PRISM Solver}
-In this chapter, first we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
-Then we described our extension to PRISM.
-
-
-\section{Incremental solver}
 In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
 
 \begin{itemize}
@@ -1883,7 +1878,7 @@ them to its neighboring nodes.
 \end{itemize}
 
 
-\subsection{Architecture of Incremental Solver}
+\section{Architecture of Incremental Solver}
 Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Changed Node Detector}
 takes \textit{Old IR} and \textit{New IR} as inputs. It compares the two IRs and detects the changed nodes. 
 Output of the \textit{Changed Node Detector} is then passed to the \textit{Preprocessor}. The \textit{Preprocessor} computes 
@@ -1950,7 +1945,7 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
     \label{fig:Architectur_incrementalPrism}
 \end{figure}
 
-\subsection{Modules of Incremental Solver}
+\section{Modules of Incremental Solver}
 The core PRISM solver was extended to support Incremental data flow analysis. Following modules are the extensions to the PRISM solver.
 \begin{itemize}
  \item \texttt{IncrementalDriver}: This module takes two IRs as an input and calls \texttt{FLA$<$queryname$>$Client} to initiate the analysis.
@@ -1973,7 +1968,7 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \item oldIRnode: It stores old IR node information
 %  \
 % \end{itemize}
-\section{Implemented Incremental Reaching Definition Analysis}
+\section{Incremental Reaching Definition Analysis}
 We implemented context sensitive incremental reaching definition analysis. The implementation
 consists of following parts:
 \begin{itemize}
@@ -2020,10 +2015,15 @@ is that the result is stored in a non standard format by the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Incremental Analysis in General framework}
+\chapter{Incremental Analysis for General framework}
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
+Bit-Vector framework cover a relatively simpler case where the data flow information of 
+different entities is independent of each other.
 In this chapter, we will discuss some of the issues in extending the existing Incremental 
 Analysis to a general framework by means of constant propagation analysis.
+
+
+
 \begin{figure}[H]
 \centering
 \psset{unit=1mm}
@@ -2437,63 +2437,6 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
 \end{figure}
 
 
-\section{Dominance Frontier}\cite{}
-Before describing the issues in incremental analysis, we first define the concept of \textit{Dominance Frontier}.
-
-Let $n$ and $m$ be nodes in the CFG. The node $n$ is said to \textit{dominate} $m$ ($n\geq m$), if every path from \textbf{Start} to $m$ passes through $n$.
-If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m$.  
-
-The \textit{dominance frontier} of a node $n$, denoted by \textbf{df(n)} is given as:
-\begin{equation}
-\begin{split}
-\mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n  m )\} \\	  
-\end{split} 
-\end{equation}
-
-Consider a graph in figure \ref{fig:dominance_frontier}. Node $n1$ contains a definition of $x$. Node $n4$ is \textit{dominated} by node $n1$. Consider a node $n5$, which is a 
-immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is said to be in the \textit{dominance frontier} of $n1$. 
-
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,40)(100,90)
-% \psframe(0,20)(100,90)
-\putnode{n0}{origin}{40}{90}{}
-\putnode{n1}{n0}{0}{-10}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$x=$}}
-\rput(30,80){\rnode{a}{n1}}
-
-\putnode{n2}{n1}{-15}{-10}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(15,70){\rnode{a}{n2}}
-
-\putnode{n3}{n1}{15}{-10}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(45,70){\rnode{a}{n3}}
-
-\putnode{n4}{n1}{0}{-20}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(30,60){\rnode{a}{n4}}
-
-\putnode{n5}{n4}{-10}{-10}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(20,50){\rnode{a}{n5}}
-
-\putnode{n6}{n2}{-5}{-10}{}
-
-
-\ncline{->}{n0}{n1}
-\ncline{->}{n1}{n2}
-\ncline{->}{n1}{n3}
-\ncline{->}{n2}{n4}
-\ncline{->}{n3}{n4}
-\ncline[linecolor = red]{->}{n6}{n5}
-\ncline{->}{n4}{n5}
-
-\end{pspicture}
-\caption{Figure shows a dominance frontier of $n1$}
-   \label{fig:dominance_frontier}
-\end{figure}
 
 
 
@@ -2558,8 +2501,73 @@ Thus, the solution is to create an affected region for all kind of changes.
 
 
 
-\section{General Optimization in the size of Affected Region}
-We present the outline of optimizing the size of the affected region in the general case.
+\section{General Optimization of the size of Affected Region}
+We outline an optimization idea to reduce the size of the affected region which can 
+eliminate certain boundary nodes from being included in the boundary region.
+This optimization is based on the observation that some boundary nodes can be characterized
+by the concept of \emph{dominance frontier}. We define the concept of \textit{Dominance Frontier} before elaborating on the optimization idea.
+
+\subsection*{Dominance Frontier}
+%TODO: add \cite{}
+
+Let $n$ and $m$ be nodes in the CFG. The node $n$ is said to \textit{dominate} $m$ ($n\geq m$), if every path from \textbf{Start} to $m$ passes through $n$.
+If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m$.  
+
+The \textit{dominance frontier} of a node $n$, denoted by \textbf{df(n)} is given as:
+\begin{equation}
+\begin{split}
+\mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n  m )\} \\	  
+\end{split} 
+\end{equation}
+
+Consider a graph in figure \ref{fig:dominance_frontier}. Node $n1$ contains a definition of $x$. Node $n4$ is \textit{dominated} by node $n1$. Consider a node $n5$, which is a 
+immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is said to be in the \textit{dominance frontier} of $n1$. 
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,40)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n0}{origin}{40}{90}{}
+\putnode{n1}{n0}{0}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$x=$}}
+\rput(30,80){\rnode{a}{n1}}
+
+\putnode{n2}{n1}{-15}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(15,70){\rnode{a}{n2}}
+
+\putnode{n3}{n1}{15}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(45,70){\rnode{a}{n3}}
+
+\putnode{n4}{n1}{0}{-20}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(30,60){\rnode{a}{n4}}
+
+\putnode{n5}{n4}{-10}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(20,50){\rnode{a}{n5}}
+
+\putnode{n6}{n2}{-5}{-10}{}
+
+
+\ncline{->}{n0}{n1}
+\ncline{->}{n1}{n2}
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n4}
+\ncline{->}{n3}{n4}
+\ncline[linecolor = red]{->}{n6}{n5}
+\ncline{->}{n4}{n5}
+
+\end{pspicture}
+\caption{Figure shows a dominance frontier of $n1$}
+   \label{fig:dominance_frontier}
+\end{figure}
+
+
+
+
 We first establish via an example that all the possible candidates of removal form a dominance frontier.
 We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
 Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
@@ -3198,19 +3206,22 @@ Given a changed node $N$, the detection process proceeds as follows
 % defined. It allows those analysis which has single data flow variable. Therefore, the anlysis writer needs to convert multi-variable equation to single-variable 
 % equation which is an extra work done by the writer. The specifications can be extended to allow analysis containig multiple variables.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{itemize}
 The following two limitations prevent us from testing our solver on real life, industry scale code bases:
+\begin{itemize}
 
- \item \textbf{Non inclusion of global and local declarations} PRISM solver is not including local and global declarations as a statement.
- \item \textbf{Persistence of Results} The results from our solver are currently written to a text file, whereas the results should 
- ideally be packed in the resulting object provided by PRISM Solver and serialized.
+ \item \textbf{Non inclusion of global and local declarations} PRISM solver is not including local and global declarations as a statement which may result in
+ a loss of information.
+ \item \textbf{Persistence of Results} The results of PRISM solver are currently written to a text file, whereas they should 
+ ideally be packed in a \emph{result} object provided by the PRISM Solver and persisted.
 \end{itemize}
 
-Resolving these issues will help us in exposing our solver to some new challenges, that might lead to new insights and avenues for improvements.
+Resolving these issues will help us in exposing our solver to some new challenges that might lead to new insights and avenues for improvements.
 
-Optimization of AR needs to be implemented because this can be used for both bit vector and general framework.
 
+
+We have proposed a new idea for the optimization of affected region (AR). The idea is framework agnostic
+(can be fitted to both bit vector and general framework), and may lead to significant time savings when
+incorporated in the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

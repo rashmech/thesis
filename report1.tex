@@ -1604,8 +1604,8 @@ Java code for function `\texttt{HasElement}' is shown below :
 
 \end{lstlisting}
 
-\section{Liveness-Based Intra-procedural reaching definition analysis}
-This section describes the flow functions for Liveness-Based Intra-procedural reaching definition analysis. This is a bi-directional
+\section{Liveness-Based Inter-procedural reaching definition analysis}
+This section describes the flow functions for Liveness-Based Inter-procedural reaching definition analysis. This is a bi-directional
 analysis and hence flow function will take two lattices \texttt{R} and \texttt{L} as a parameter. Lattice \texttt{R} is for reaching definition analysis and
 \texttt{L} is for strongly liveness analysis. In first phase, it will do strongly liveness analysis which is a backward flow analysis.
 Data flow equations for liveness-Based reaching definition analysis in shown below. The reaching definition sets (\textit{RIn}$_n$ and \textit{ROut}$_n$) are restricted 
@@ -1863,11 +1863,6 @@ point in liveness-based analysis is much smaller then that of the normal reachin
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental PRISM Solver}
-In this chapter, first we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
-Then we described our extension to PRISM.
-
-
-\section{Incremental solver}
 In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
 
 \begin{itemize}
@@ -1883,7 +1878,7 @@ them to its neighboring nodes.
 \end{itemize}
 
 
-\subsection{Architecture of Incremental Solver}
+\section{Architecture of Incremental Solver}
 Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Changed Node Detector}
 takes \textit{Old IR} and \textit{New IR} as inputs. It compares the two IRs and detects the changed nodes. 
 Output of the \textit{Changed Node Detector} is then passed to the \textit{Preprocessor}. The \textit{Preprocessor} computes 
@@ -1950,7 +1945,7 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
     \label{fig:Architectur_incrementalPrism}
 \end{figure}
 
-\subsection{Modules of Incremental Solver}
+\section{Modules of Incremental Solver}
 The core PRISM solver was extended to support Incremental data flow analysis. Following modules are the extensions to the PRISM solver.
 \begin{itemize}
  \item \texttt{IncrementalDriver}: This module takes two IRs as an input and calls \texttt{FLA$<$queryname$>$Client} to initiate the analysis.
@@ -1973,7 +1968,7 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \item oldIRnode: It stores old IR node information
 %  \
 % \end{itemize}
-\section{Implemented Incremental Reaching Definition Analysis}
+\section{Incremental Reaching Definition Analysis}
 We implemented context sensitive incremental reaching definition analysis. The implementation
 consists of following parts:
 \begin{itemize}
@@ -2020,10 +2015,18 @@ is that the result is stored in a non standard format by the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Incremental Analysis in General framework}
+\chapter{Incremental Analysis for General framework}
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
+Bit-Vector frameworks cover a relatively simpler case where the data flow information of 
+different entities is independent of each other. In situations where the data flow information
+of entities is interdependent, a more general kind of flow functions are needed.
+The corresponding general frameworks are called \emph{non-separable}.
+
 In this chapter, we will discuss some of the issues in extending the existing Incremental 
 Analysis to a general framework by means of constant propagation analysis.
+
+
+
 \begin{figure}[H]
 \centering
 \psset{unit=1mm}
@@ -2437,8 +2440,78 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
 \end{figure}
 
 
-\section{Dominance Frontier}\cite{}
-Before describing the issues in incremental analysis, we first define the concept of \textit{Dominance Frontier}.
+
+
+
+
+\section{Issues in incremental analysis in general framework}
+
+Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
+the change to its neighboring nodes since it may depend on the OUT information of the node.
+We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
+then according to existing incremental analysis, this is a change to bottom and we can directly propagate
+the change to its neighboring nodes. However, this is not the case. 
+The information at the IN of node 4 is bottom because of the expression $b=2$ in node 4.
+If we will propagate $\bot$ to neighboring nodes, it will give incorrect results.
+Unlike bit-vector framework, we may need to create an affected region even if there is a change to bottom.
+Thus, the solution is to create an affected region for all kind of changes.
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,20)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n1}{origin}{30}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(20,80){\rnode{a}{n1}}
+\rput(29,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(29,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n2}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(59,80){\rnode{b}{n2}}
+\rput(70,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(70,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n3}{n1}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(39,65){\rnode{c}{n3}}
+\rput(37,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n4}{n1}{20}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
+\rput(39,50){\rnode{a}{n4}}
+\rput(37,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+\putnode{n5}{n1}{20}{-45}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(39,35){\rnode{a}{n5}}
+\rput(37,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
+\rput(37,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-15,
+                linearc=0.5,offsetA=1, offsetB=1]{->}{n5}{n3}
+
+\end{pspicture}
+\caption{Constant propagation analysis}
+   \label{fig:incr_non-bit1}
+\end{figure}
+
+
+
+\section{General Optimization of the size of Affected Region}
+We outline an optimization idea to reduce the size of the affected region which can 
+eliminate certain boundary nodes from being included in the boundary region.
+This optimization is based on the observation that some boundary nodes can be characterized
+by the concept of \emph{dominance frontier}. We define the concept of \textit{Dominance Frontier} before elaborating on the optimization idea.
+
+\subsection*{Dominance Frontier}
+%TODO: add \cite{}
 
 Let $n$ and $m$ be nodes in the CFG. The node $n$ is said to \textit{dominate} $m$ ($n\geq m$), if every path from \textbf{Start} to $m$ passes through $n$.
 If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m$.  
@@ -2498,73 +2571,6 @@ immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is sa
 
 
 
-\section{Issues in incremental analysis in general framework}
-
-Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
-the change to its neighboring nodes since it may depend on the OUT information of the node.
-We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
-then according to existing incremental analysis, this is a change to bottom and we can directly propagate
-the change to its neighboring nodes. However, this is not the case. 
-The information at the IN of node 4 is bottom because of the expression $b=2$ in node 4.
-If we will propagate $\bot$ to neighboring nodes, it will give incorrect results.
-Unlike bit-vector framework, we may need to create an affected region even if there is a change to bottom.
-Thus, the solution is to create an affected region for all kind of changes.
-\begin{figure}[H]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,20)(100,90)
-% \psframe(0,20)(100,90)
-\putnode{n1}{origin}{40}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(30,80){\rnode{a}{n1}}
-\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
-
-\putnode{n2}{n1}{40}{0}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(69,80){\rnode{b}{n2}}
-\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
-
-\putnode{n3}{n1}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,65){\rnode{c}{n3}}
-\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
-
-\putnode{n4}{n1}{20}{-30}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(49,50){\rnode{a}{n4}}
-\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
-
-\putnode{n5}{n1}{20}{-45}{%
-     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,35){\rnode{a}{n5}}
-\rput(47,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
-\rput(47,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
-
-\ncline{->}{n1}{n3}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n4}
-\ncline{->}{n4}{n5}
-\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-15,
-                linearc=0.5,offsetA=1, offsetB=1]{->}{n5}{n3}
-
-\end{pspicture}
-\caption{Constant propagation analysis}
-   \label{fig:incr_non-bit1}
-\end{figure}
-
-
-
-\section{General Optimization of the size of Affected Region}
-We outline an optimization idea to reduce the size of the affected region which can 
-eliminate certain boundary nodes from being included in the boundary region.
-This optimization is based on the observation that some boundary nodes can be characterized
-by the concept of \emph{dominance frontier}.
-
-of optimizing the size of the affected region in the general case.
 We first establish via an example that all the possible candidates of removal form a dominance frontier.
 We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
 Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
@@ -2582,47 +2588,47 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 \psset{unit=1mm}
 \begin{pspicture}(0,0)(100,90)
 % \psframe(0,20)(100,90)
-\putnode{n1}{origin}{40}{80}{%
+\putnode{n1}{origin}{30}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(30,80){\rnode{a}{n1}}
-\rput(39,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
-\rput(39,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
+\rput(20,80){\rnode{a}{n1}}
+\rput(29,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(29,74){\rnode{a2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n2}{n1}{40}{0}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=1$}}
-\rput(69,80){\rnode{b}{n2}}
-\rput(80,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(80,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+\rput(59,80){\rnode{b}{n2}}
+\rput(70,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(70,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n3}{n1}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,65){\rnode{c}{n3}}
-\rput(47,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(39,65){\rnode{c}{n3}}
+\rput(37,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n4}{n1}{20}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,50){\rnode{a}{n4}}
-\rput(47,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+\rput(39,50){\rnode{a}{n4}}
+\rput(37,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,45){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
 
 \putnode{n5}{n1}{20}{-45}{%
      \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
-\rput(49,35){\rnode{a}{n5}}
-\rput(47,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
-\rput(47,30){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,35){\rnode{a}{n5}}
+\rput(37,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(37,30){\rnode{c2}{\blue$\langle b=3 \rangle$}}
 
 \putnode{n6}{n5}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,20){\rnode{c}{n6}}
-\rput(47,23){\rnode{c1}{\blue$\langle b=3 \rangle$}}
-\rput(47,16){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,20){\rnode{c}{n6}}
+\rput(37,23){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(37,16){\rnode{c2}{\blue$\langle b=3 \rangle$}}
       
 \putnode{n7}{n6}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-\rput(49,5){\rnode{c}{n7}}
-\rput(47,8){\rnode{c1}{\blue$\langle b=3 \rangle$}}
-\rput(47,1){\rnode{c2}{\blue$\langle b=3 \rangle$}}
+\rput(39,5){\rnode{c}{n7}}
+\rput(37,8){\rnode{c1}{\blue$\langle b=3 \rangle$}}
+\rput(37,1){\rnode{c2}{\blue$\langle b=3 \rangle$}}
 
 \ncline{->}{n1}{n3}
 \ncline{->}{n2}{n3}
