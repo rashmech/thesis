@@ -1460,6 +1460,47 @@ by PRISM framework as input and generates a result.
 \subsection{Running the generated analyser}
 The steps for configuring and running the analyzer are given in the Appendix~\ref{ap:A}.
 
+\section{Bi-directional Solver}
+In this section, we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
+The Kulang, a specification language, is used to specify the data flow analysis in PRISM. The bi-directional Kulang compiler parses the specifications
+and generates java classes. The Bi-directional Solver invokes the generated java classes to solve the data flow problem.
+
+Following are generated .java files:
+\begin{itemize}
+ \item \texttt{kulang$<$queryname$>$FG$\_$Flow.java}: It contains \textit{forward and backward} flow and inter-procedural edge functions.  
+ \item \texttt{kulang$<$queryname$>$FG$\_$Meet.java}: It contains \textit{forward and backward} meet functions.
+ \item \texttt{kulang$<$queryname$>$FG$\_$Adapter.java}: It provides an interface to create an instance of the query. 
+ \item \texttt{kulang$<$queryname$>$FG$\_$ModelPopulator.java}: It populates the model.
+\end{itemize}
+
+
+\subsection{Modules of Bi-directional Solver}
+Following modules are used in the bi-directional Solver.
+\begin{itemize}
+ \item \textbf{DFStore:} It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
+ \item \textbf{ValueContexts:} It stores information about contexts formed during analysis.
+ \item \textbf{ContextTransition:} It stores context transition graph which is a method of representing call strings.
+ \item \textbf{DFSolverLogger:} This module provides utilities for logging, measuring performance parameters of the core solver.
+ \item \textbf{InterproceduralWorklist:} This module manages work list and applies a priority scheme to the work list.
+\end{itemize}
+
+More details about these modules are presented in the Appendix~\ref{ap:BidirectionalSolver}
+
+\subsection{Limitations of Bi-directional Solver}
+Following are some of the limitations of the Bi-directional solver:
+\begin{itemize}
+ \item It does not support Incremental data flow analysis.
+ \item It outputs the results in a text file. 
+ \item Meet function needs to be explicitly specified in kulang specifications. The meet function can be inferred from
+the lattice of the data flow problem.
+ \item There is no proper way to debug the kulang specifications.
+ \item The specification language is not very intuitive and has a steep learning curve.
+\end{itemize}
+
+
+
+
+
 \begin{comment}
 \subsection{Limitations in current version of PRISM}
 This section describes some imitations in current version of PRISM. Some of which we are trying to overcome in our implementation.
@@ -1475,13 +1516,13 @@ the lattice of the data flow problem
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Liveness Based Reaching Definition Analysis using PRISM}
-\begin{comment}
-In order to understand PRISM, we have implemented a query for Intra-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
+
+In order to understand PRISM, we have implemented a query for Inter-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
 implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
 Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
 liveness.
 
-\section{Intra-procedural reaching definition analysis}
+\section{Inter-procedural reaching definition analysis}
 This section describes the flow functions for Intra-procedural reaching definition analysis.
 The Data flow equations for Reaching Definition analysis is shown below:
 
@@ -1818,48 +1859,13 @@ and Strong liveness analysis with aliasing.
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
 For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
 point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
-\end{comment}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Incremental PRISM Solver}
 In this chapter, first we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
 Then we described our extension to PRISM.
 
-\section{Bi-directional Solver}
-The Kulang, a specification language, is used to specify the data flow analysis in PRISM. The bi-directional Kulang compiler parses the specifications
-and generates java classes. The Bi-directional Solver invokes the generated java classes to solve the data flow problem.
-
-Following are generated .java files:
-\begin{itemize}
- \item \texttt{kulang$<$queryname$>$FG$\_$Flow.java}: It contains \textit{forward and backward} flow and inter-procedural edge functions.  
- \item \texttt{kulang$<$queryname$>$FG$\_$Meet.java}: It contains \textit{forward and backward} meet functions.
- \item \texttt{kulang$<$queryname$>$FG$\_$Adapter.java}: It provides an interface to create an instance of the query. 
- \item \texttt{kulang$<$queryname$>$FG$\_$ModelPopulator.java}: It populates the model.
-\end{itemize}
-
-
-\subsection{Modules of Bi-directional Solver}
-Following modules are used in the bi-directional Solver.
-\begin{itemize}
- \item \textbf{DFStore:} It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
- \item \textbf{ValueContexts:} It stores information about contexts formed during analysis.
- \item \textbf{ContextTransition:} It stores context transition graph which is a method of representing call strings.
- \item \textbf{DFSolverLogger:} This module provides utilities for logging, measuring performance parameters of the core solver.
- \item \textbf{InterproceduralWorklist:} This module manages work list and applies a priority scheme to the work list.
-\end{itemize}
-
-More details about these modules are presented in the Appendix.
-
-\subsection{Limitations of Bi-directional Solver}
-Following are some of the limitations of the Bi-directional solver:
-\begin{itemize}
- \item It does not support Incremental data flow analysis.
- \item It outputs the results in a text file. 
- \item Meet function needs to be explicitly specified in kulang specifications. The meet function can be inferred from
-the lattice of the data flow problem.
- \item There is no proper way to debug the kulang specifications.
- \item The specification language is not very intuitive and has a steep learning curve.
-\end{itemize}
 
 \section{Incremental solver}
 In this section, we describe implementation of the Incremental Solver. It is divided into the following three parts:
@@ -1948,7 +1954,8 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
 The core PRISM solver was extended to support Incremental data flow analysis. Following modules are the extensions to the PRISM solver.
 \begin{itemize}
  \item \texttt{IncrementalDriver}: This module takes two IRs as an input and calls \texttt{FLA$<$queryname$>$Client} to initiate the analysis.
- \item \texttt{FLA$<$queryname$>$Client}: This module stores old IR information into \texttt{OldIRNode} and initiate incremental analysis of new IR.
+ \item \texttt{FLA$<$queryname$>$Client}: This module discards the old IR after storing the old IR node information into \texttt{OldIRNode}
+ and initiate incremental analysis of new IR.
  \item \texttt{CreateAffectedRegion}: This module detects the change in the control flow graph. It also detects affected region and a set of boundary nodes.
  The API functions which detects affected region and boundary nodes are as follows:
  \begin{itemize}
@@ -1972,7 +1979,7 @@ consists of following parts:
 \begin{itemize}
  \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
  each statement.  It is specified in the Kulang specification. 
- \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
+  \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
  \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
  Since Kulang does not currently support specification for inter-procedural analysis, they are implemented in java.
  \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
@@ -1980,22 +1987,32 @@ consists of following parts:
 \end{itemize}
 
 
-\section{Issues in Implementing Incremental Analysis}
-\begin{itemize}
- \item \textbf{Reading two IRs} The old solvers reads only a single IR. However, for incremental analysis we need both the old and new IR for comparison.
- For this, we change the driver to take the two IRs and discard the old IR after storing the old IR node information.
- \item Old solver output the results in a text file. For incremental update, we need to access the old solution of the program whose incremental analysis has to be done. 
- However, re-creating all the abstractions from the text output is not possible owing to lack of source code that performed the serialization in the first place.
- This thus involves some inherent loss of information.
-\end{itemize}
+% \section{Issues in Implementing Incremental Analysis}
+% \begin{itemize}
+%  \item \textbf{Reading two IRs} The old solvers reads only a single IR. However, for incremental analysis we need both the old and new IR for comparison.
+%  For this, we change the driver to take the two IRs and discard the old IR after storing the old IR node information.
+%  \item Old solver output the results in a text file. For incremental update, we need to access the old solution of the program whose incremental analysis has to be done. 
+%  However, re-creating all the abstractions from the text output is not possible owing to lack of source code that performed the serialization in the first place.
+%  This thus involves some inherent loss of information.
+% \end{itemize}
 
-\section{Assumptions}
+\section{Assumptions and Limitation }
+
 The assumptions that we make are as follows:
 \begin{itemize}
 \item There is no structural change in the graph.
 \item Pointer information will remain same,
 \item There is no change in the context information.
+\item Declaration of variables haven't change.
+\item A name can refer to a single variable in a program at any given program point.
+\item The past information is stored flow sensitively.
 \end{itemize}
+
+
+The results from the old solver are stored in a text file, and not in serialized format as should be done ideally.
+However, under the above stated assumptions, the only limitation that stems from reading from a text file 
+is that the result is stored in a non standard format by the solver.
+
 
 
 
@@ -2007,7 +2024,482 @@ The assumptions that we make are as follows:
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
 In this chapter, we will discuss some of the issues in extending the existing Incremental 
 Analysis to a general framework by means of constant propagation analysis.
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,-10)(100,50)
+%%\psframe(0,-10)(100,50)
+\rput(50,40){\rnode{t1}{$\top$}}
+\rput(50,35){\rnode{t2}{undef or ud}}
+\rput(10,20){\rnode{c1}{$-\infty$}}
+\rput(15,20){\rnode{c2}{$\cdots$}}
+\rput(20,20){\rnode{c3}{$-3$}}
+\rput(30,20){\rnode{c4}{$-2$}}
+\rput(40,20){\rnode{c5}{$-1$}}
+\rput(50,20){\rnode{c6}{$0$}}
+\rput(60,20){\rnode{c7}{$1$}}
+\rput(70,20){\rnode{c8}{$2$}}
+\rput(80,20){\rnode{c9}{$3$}}
+\rput(85,20){\rnode{c10}{$\cdots$}}
+\rput(90,20){\rnode{c11}{$\infty$}}
+\rput(50,5){\rnode{b1}{nonconst or nc}}
+\rput(50,0){\rnode{b2}{$\bot$}}
+\ncline{-}{t2}{c1}
+%%\ncline{-}{t2}{c2}
+\ncline{-}{t2}{c3}
+\ncline{-}{t2}{c4}
+\ncline{-}{t2}{c5}
+\ncline{-}{t2}{c6}
+\ncline{-}{t2}{c7}
+\ncline{-}{t2}{c8}
+\ncline{-}{t2}{c9}
+%%\ncline{-}{t2}{c10}
+\ncline{-}{t2}{c11}
+\ncline{-}{b1}{c1}
+%%\ncline{-}{b1}{c2}
+\ncline{-}{b1}{c3}
+\ncline{-}{b1}{c4}
+\ncline{-}{b1}{c5}
+\ncline{-}{b1}{c6}
+\ncline{-}{b1}{c7}
+\ncline{-}{b1}{c8}
+\ncline{-}{b1}{c9}
+%%\ncline{-}{b1}{c10}
+\ncline{-}{b1}{c11}
+\end{pspicture}
+\caption[Component Lattice for Constant Propagation]{Component Lattice for Integer Constant Propagation}
+   \label{fig:non_c_l}
+\end{figure}
+
+Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
+with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
+to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
+
+Following are the possible flow functions in Constant Propagation analysis:
+\begin{itemize}
+\item Top : It is similar to the raise function in bit-vector framework. It always results in Top value.
+\item Bottom : It is similar to the lower function in bit-vector framework. It always results in Bottom value.
+ \item Constant : Function whose result is always constant. Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(a),
+ the flow function at node n2 will always produce a constant value 1 at the OUT of n2. There is one function per value.
+  \item Side level : Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(b), the value 
+ of $a$ at node n3 depends on the value of $b$ and $c$. If $b$ and $c$ is constant, as in the figure, then $a$ will also become constant. If any of them
+ is top/bottom then $a$ will become top/bottom.
+ Flow functions for these type of statements whose value depends on the operands of the statement is known as side level function.
+ \end{itemize}
+
+\begin{figure}[h]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(0,50)
+%%\psframe(0,0)(50,50)
+\putnode{n1}{origin}{-20}{40}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
+\putnode{a}{n1}{-10}{0}{n1}
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$b=1$}}
+\putnode{a}{n2}{-10}{0}{n2}
+\putnode{n3}{n2}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
+\putnode{a}{n3}{-10}{0}{n3}
+\putnode{a1}{n3}{0}{-10}{(a)}
+
+
+\putnode{n12}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$a=3$}}
+\putnode{a}{n12}{-10}{0}{n1}
+\putnode{n22}{n12}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$c=2$}}
+\putnode{a}{n22}{-10}{0}{n2}
+\putnode{n32}{n22}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$a=b+c$}}
+\putnode{a}{n32}{-15}{0}{n3}
+\putnode{a2}{n32}{0}{-10}{(b)}
+
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n12}{n22}
+\ncline{->}{n22}{n32}
+\end{pspicture}
+\caption[Additional possible flow functions]{Flow functions in Constant Propagation analysis}
+   \label{fig:flow_func_constant}
+\end{figure}
+
+ 
+\subsection{Changes in Constant Propagation analysis}
+In addition to the changes given in section \ref{sec:bit-vector}, a change from intermediate
+level to other levels is also possible.
+\begin{itemize}
+ \item a change to top,
+ \item a change to bottom, and
+ \item a side level change
+\end{itemize}
+
+
+
+
+\subsubsection{Change from intermediate level to top}
+Consider a Constant propagation analysis in control flow graph shown in figure~\ref{fig:inter_otherlevels_upper}.
+In this case, if expression $b=a$ is removed from the node then $b$ will become $\top$ at the OUT of node $n3$, a change from intermediate level to top($\bot$).
+\begin{figure}[t]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,10)(150,90)
+%%\psframe(0,0)(100,90)
+\putnode{n1}{origin}{27}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$}}
+\rput(13,80){\rnode{a}{n1}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
+\rput(15,65){\rnode{a}{n2}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\red$b=a$}}
+\rput(-1,56){\rnode{a}{\blue$\langle b=1 \rangle$}}
+\rput(17,50){\rnode{a}{n3}}
+\rput(-1,44){\rnode{a}{\blue$\langle b=1 \rangle$}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(57,50){\rnode{a}{n4}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(38,35){\rnode{a}{n5}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(39,20){\rnode{a}{n6}}
+\rput(27,10){\rnode{a1}{(a)}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
+		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+
+\putnode{n1}{origin}{101}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ $a=1$}}
+\rput(87,80){\rnode{a}{n1}}
+\rput(87,85){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\rput(87,74){\rnode{a}{\blue$\langle b=\top \rangle$}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
+\rput(88,65){\rnode{a}{n2}}
+
+\rput(101,58){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(74,56){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\rput(92,50){\rnode{a}{n3}}
+
+\rput(74,44){\rnode{a}{\blue$\langle b=\top  \rangle$}}
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(109,50){\rnode{a}{n4}}
+\rput(129,55){\rnode{a}{\blue$\langle b=\top \rangle$}}
+
+\rput(129,45){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(89,30){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\rput(89,40){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\rput(89,35){\rnode{a}{n5}}
+\rput(89,25){\rnode{a}{\blue$\langle b=\top \rangle$}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(89,20){\rnode{a}{n6}}
+\rput(89,15){\rnode{a}{\blue$\langle b=\top\rangle$}}
+\rput(101,10){\rnode{a1}{(b)}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
+                linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+
+
+
+		
+\end{pspicture}
+\caption[Change from intermediate level to top]{Change from intermediate level to top}
+   \label{fig:inter_otherlevels_upper}
+\end{figure}
+
+\subsubsection{Change from intermediate level to bottom}
+Consider a control flow graph as shown in figure~\ref{fig:inter_otherlevels_lower}.
+After a removal of expression $b=a$ at node $n4$, $b$ becomes bottom($\bot$) at 
+the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)), a change from intermediate level to bottom($\bot$).
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,25)(150,90)
+%%\psframe(0,15)(150,90)
+
+
+\putnode{n1}{origin}{10}{80}{%
+     \psframebox[linewidth=.3,framesep=0.5]{\begin{tabular}{c}$a=2$ \\$b=1$
+                                             \end{tabular}}}
+\rput(25,80){\rnode{a}{n1}}
+\rput(-5,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(-5,74){\rnode{a2}{\blue$\langle b=1 \rangle$}}
+
+\putnode{n2}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(60,80){\rnode{b}{n2}}
+\rput(37,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(37,77){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+
+\putnode{n3}{n1}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(40,65){\rnode{c}{n3}}
+\rput(16,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(16,60){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n4}{n1}{20}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=a$}}
+\rput(40,50){\rnode{a}{n4}}
+\rput(16,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(16,45){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+
+
+\putnode{n5}{n1}{20}{-45}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(40,35){\rnode{a}{n5}}
+\rput(16,40){\rnode{c1}{\blue$\langle b=2 \rangle$}}
+\rput(16,30){\rnode{c2}{\blue$\langle b=2 \rangle$}}
+
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+% \ncline{->}{n5}{n6}
+
+
+\putnode{n1}{origin}{90}{80}{%
+     \psframebox[linewidth=.3,framesep=0.4]{\begin{tabular}{c}$a=2$ \\ $b=1$
+                                             \end{tabular}}}
+\rput(105,80){\rnode{a}{n1}}
+\rput(76,86){\rnode{a1}{\blue$\langle b=\top \rangle$}}
+\rput(76,74){\rnode{a2}{\blue$\langle b=1 \rangle$}}
+
+\putnode{n2}{n1}{40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=3$}}
+\rput(140,80){\rnode{a}{n2}}
+\rput(117,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
+\rput(117,76){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+
+
+\putnode{n3}{n1}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(120,65){\rnode{a}{n3}}
+\rput(97,69){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(97,61){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+
+\putnode{n4}{n1}{20}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(120,50){\rnode{a}{n4}}
+\rput(97,55){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(97,46){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+\putnode{n5}{n1}{20}{-45}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(120,35){\rnode{a}{n5}}
+\rput(97,40){\rnode{c1}{\blue$\langle b=\bot \rangle$}}
+\rput(97,30){\rnode{c2}{\blue$\langle b=\bot \rangle$}}
+
+
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+% \ncline{->}{n5}{n6}
+
+
+		
+\end{pspicture}
+\caption[Change from intermediate level to bottom in Non-bit vector framework]{Change from intermediate level to bottom}
+   \label{fig:inter_otherlevels_lower}
+\end{figure}
+
+
+
+\subsubsection{Side level change}
+Consider a control flow graph as shown in figure~\ref{fig:inter_otherlevels}. Suppose, expression $b=a$ at node $n3$ has been removed as shown in 
+figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the OUT of node $n3$, a side level change in the lattice.
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,10)(150,90)
+%%\psframe(0,0)(100,90)
+\putnode{n1}{origin}{27}{80}{%
+     \psframebox[linewidth=.3,framesep=0.5]{\begin{tabular}{c}$a=1$ \\ $b=2$
+                                             \end{tabular}}}
+\rput(13,80){\rnode{a}{n1}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
+\rput(15,65){\rnode{a}{n2}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\red$b=a$}}
+\rput(-1,56){\rnode{a}{\blue$\langle b=\bot \rangle$}}
+\rput(17,50){\rnode{a}{n3}}
+\rput(-1,44){\rnode{a}{\blue$\langle b=1 \rangle$}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(57,50){\rnode{a}{n4}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(38,35){\rnode{a}{n5}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(39,20){\rnode{a}{n6}}
+\rput(27,10){\rnode{a1}{(a)}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
+		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+
+\putnode{n1}{origin}{101}{80}{%
+     \psframebox[linewidth=.3,framesep=0.5]{\begin{tabular}{c}$a=1$ \\ $b=2$
+                                             \end{tabular}}}
+\rput(87,80){\rnode{a}{n1}}
+\rput(87,85){\rnode{a}{\blue$\langle b=\top \rangle$}}
+\rput(87,74){\rnode{a}{\blue$\langle b=2 \rangle$}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{if($a\geq2$)}}
+\rput(88,65){\rnode{a}{n2}}
+
+\rput(101,58){\rnode{a}{\blue$\langle b=2\rangle$}}
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(74,56){\rnode{a}{\blue$\langle b=2\rangle$}}
+\rput(92,50){\rnode{a}{n3}}
+
+\rput(74,44){\rnode{a}{\blue$\langle b=2 \rangle$}}
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(109,50){\rnode{a}{n4}}
+\rput(129,55){\rnode{a}{\blue$\langle b=2 \rangle$}}
+
+\rput(129,45){\rnode{a}{\blue$\langle b=2 \rangle$}}
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(89,30){\rnode{a}{\blue$\langle b=2 \rangle$}}
+\rput(89,40){\rnode{a}{\blue$\langle b=2 \rangle$}}
+\rput(89,35){\rnode{a}{n5}}
+\rput(89,25){\rnode{a}{\blue$\langle b=2 \rangle$}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(89,20){\rnode{a}{n6}}
+\rput(89,15){\rnode{a}{\blue$\langle b=2 \rangle$}}
+\rput(101,10){\rnode{a1}{(b)}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-33,
+                linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+
+
+
+		
+\end{pspicture}
+\caption[Side level change in lattice]{Side level change}
+   \label{fig:inter_otherlevels}
+\end{figure}
+
+
+\section{Dominance Frontier}\cite{}
+Before describing the issues in incremental analysis, we first define the concept of \textit{Dominance Frontier}.
+
+Let $n$ and $m$ be nodes in the CFG. The node $n$ is said to \textit{dominate} $m$ ($n\geq m$), if every path from \textbf{Start} to $m$ passes through $n$.
+If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m$.  
+
+The \textit{dominance frontier} of a node $n$, denoted by \textbf{df(n)} is given as:
+\begin{equation}
+\begin{split}
+\mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n  m )\} \\	  
+\end{split} 
+\end{equation}
+
+Consider a graph in figure \ref{fig:dominance_frontier}. Node $n1$ contains a definition of $x$. Node $n4$ is \textit{dominated} by node $n1$. Consider a node $n5$, which is a 
+immediate successor of $n4$, is node dominated by $n1$. Node such as $n5$, is said to be in the \textit{dominance frontier} of $n1$. 
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,40)(100,90)
+% \psframe(0,20)(100,90)
+\putnode{n0}{origin}{40}{90}{}
+\putnode{n1}{n0}{0}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$x=$}}
+\rput(30,80){\rnode{a}{n1}}
+
+\putnode{n2}{n1}{-15}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(15,70){\rnode{a}{n2}}
+
+\putnode{n3}{n1}{15}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(45,70){\rnode{a}{n3}}
+
+\putnode{n4}{n1}{0}{-20}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(30,60){\rnode{a}{n4}}
+
+\putnode{n5}{n4}{-10}{-10}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+\rput(20,50){\rnode{a}{n5}}
+
+\putnode{n6}{n2}{-5}{-10}{}
+
+
+\ncline{->}{n0}{n1}
+\ncline{->}{n1}{n2}
+\ncline{->}{n1}{n3}
+\ncline{->}{n2}{n4}
+\ncline{->}{n3}{n4}
+\ncline[linecolor = red]{->}{n6}{n5}
+\ncline{->}{n4}{n5}
+
+\end{pspicture}
+\caption{Figure shows a dominance frontier of $n1$}
+   \label{fig:dominance_frontier}
+\end{figure}
+
+
+
+
 \section{Issues in incremental analysis in general framework}
+
 Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
 the change to its neighboring nodes since it may depend on the OUT information of the node.
 We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
@@ -2066,8 +2558,13 @@ Thus, the solution is to create an affected region for all kind of changes.
 
 
 
-\section{General Optimization in the size of Affected Region}
-We present the outline of optimizing the size of the affected region in the general case.
+\section{General Optimization of the size of Affected Region}
+We outline an optimization idea to reduce the size of the affected region which can 
+eliminate certain boundary nodes from being included in the boundary region.
+This optimization is based on the observation that some boundary nodes can be characterized
+by the concept of \emph{dominance frontier}.
+
+of optimizing the size of the affected region in the general case.
 We first establish via an example that all the possible candidates of removal form a dominance frontier.
 We further illustrate via an example that dominance frontier nodes are a subset of the boundary nodes.
 Given these two facts, it follows that the nodes that can be deleted can be identified during the AR 
@@ -2706,13 +3203,189 @@ Given a changed node $N$, the detection process proceeds as follows
 % defined. It allows those analysis which has single data flow variable. Therefore, the anlysis writer needs to convert multi-variable equation to single-variable 
 % equation which is an extra work done by the writer. The specifications can be extended to allow analysis containig multiple variables.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The following two limitations prevent us from testing our solver on real life, industry scale code bases:
+\begin{itemize}
+
+ \item \textbf{Non inclusion of global and local declarations} PRISM solver is not including local and global declarations as a statement which may result in
+ a loss of information.
+ \item \textbf{Persistence of Results} The results of PRISM solver are currently written to a text file, whereas they should 
+ ideally be packed in a \emph{result} object provided by the PRISM Solver and persisted.
+\end{itemize}
+
+Resolving these issues will help us in exposing our solver to some new challenges that might lead to new insights and avenues for improvements.
+
+
+
+We have proposed a new idea for the optimization of affected region (AR). The idea is framework agnostic
+(can be fitted to both bit vector and general framework), and may lead to significant time savings when
+incorporated in the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \appendix
+\chapter{Bi-directional Solver}\label{ap:BidirectionalSolver}
+In this section, we describe the implementation of core Bi-directional \emph{PRISM} solver. The core bi-directional solver 
+integrates with the generated bi-directional solver from kulang compiler and solves the given data flow problem in a context
+sensitive manner. The solver is the main driver of the data flow analysis. Its role in the data flow analysis is shown in 
+figure \ref{fig:solverstructure}. In this chapter we describe the modules of bidirectional solver and data structures used 
+by core solver.
+% Finally we describe the implementation of Liveness based Flow and Context sensitive pointer analysis which 
+% was implemented for the bidirectional solver.
+
+\begin{figure}[H]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(-20,15)(115,90)
+
+\begin{psframe}(-20,15)(115,90)
+\putnode{n1}{origin}{75}{80}{%
+	  {\textbf{Program}}
+     }
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{IR Generator}}
+
+\putnode{n3}{n2}{0}{-10}{%
+     {\textbf{Generated IR}}}
+
+\putnode{n4}{n3}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Solver}}
+
+\putnode{n5}{n4}{30}{0}{{\textbf{Results}}}
+
+\putnode{n6}{n4}{-55}{0}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Kulang Compiler}}
+
+% \putnode{n8}{n6}{0}{15}{%
+%      {Copied}}
+% \rput(55,33){\rnode{a}{Generated}}
+\putnode{n7}{n6}{-30}{0}{%
+      {\textbf{.klg files}}}
+
+\putnode{n8}{n6}{5}{15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Other Utility functions}}
+\putnode{n9}{n7}{64}{-6}{%
+     {Generated Java files}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n6}{n4}
+\ncline{->}{n7}{n6}
+% \nccurve[angleA=0, angleB=100, ncurv=0.5]{->}{n7}{n6}
+\ncline{->}{n8}{n4}
+\end{psframe}
+
+\end{pspicture}
+\caption{Role of PRISM solver}
+\label{fig:solverstructure}
+\end{figure}
+
+\subsection*{Modules of Bidirectional solver}
+The  core \emph{PRISM} solver was extended to support bi-directional data flow problems. 
+The following modules are the extensions to the \emph{PRISM} solver:
+
+\begin{enumerate}
+\item \emph{DFStore}: This module stores context sensitive data flow information and provides an API to access it. The class diagram for this module 
+is shown in figure \ref{fig:dfstore}.
+
+It stores data flow values at IN/OUT of every node. The information at IN/OUT consist of \emph{(contextId, dataflow information)} pairs. 
+A Hashmap is used to store this information. The key of the Hashmap consists of program statement or \emph{ICFGNode} and the value consists
+of another HashMap containing \emph{(contextId, data flow value)} pairs.
+
+% 
+% The key value mapping for the data structure is,
+% \newline
+% \emph{program point $\rightarrow $ pointer to value hashmap}
+% \newline
+% \newline
+% In the retrieved hashmap from the previous mapping values are mapped as, 
+% \newline
+% \emph{(context id) $\rightarrow $ data flow value}
+% \newline
+% \newline
+
+
+
+% \begin{figure}
+% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/DFStore_C.eps}
+% \caption{Class Diagram for DFStore}
+% \label{fig:dfstore}
+% \end{figure}
+
+
+\item \emph{ValueContexts}: This module holds information about contexts formed during the analysis.
+The class diagram for this module is shown in figure \ref{fig:valuecontexts}.
+
+ValueContexts stores information of value contexts and maps each value context to a unique context id. 
+It is implemented using a Vector which provides fast random access to query information about a value context. Each cell of the vector corresponds to
+a context id and stores information about context of the corresponding context id. 
+
+An API is defined to store and retrieve values from the data structure. It is implemented in \emph{ValueContexts.java} in the \emph{DFSolver} package. 
+The data structure is shown in figure \ref{fig:valuecontexts}.
+
+\begin{figure}[!ht]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(150,80)
+\begin{psframe}(0,0)(129,80)
+\putnode{n0}{origin}{20}{60}{\psframebox{~~} }
+\putnode{n1}{n0}{5}{0}{\psframebox{~~} }
+\putnode{n2}{n1}{5}{0}{\psframebox{~~} }
+\putnode{n3}{n2}{5}{0}{\psframebox{~~} }
+\putnode{n4}{n3}{5}{0}{\psframebox{~~} }
+\putnode{n5}{n4}{5}{0}{\psframebox{~~} }
+\putnode{n6}{n5}{5}{0}{\psframebox{~~} }
+\putnode{n7}{n6}{5}{0}{\psframebox{~~} }
+
+\putnode{n10}{n0}{30}{10}{Vector of pointers to Value context objects }
+\putnode{n11}{n0}{40}{-40}{Value context }
+
+\putnode{n20}{n0}{40}{-30}{ \psframebox{Context ID $\mid$ Function name $\mid$ Entry value pair $\mid$ Exit value pair}}
+\nccurve[ncurv=0.5,angleA=270,angleB=90]{->}{n0}{n20}
+
+\end{psframe}
+\end{pspicture}
+\caption{Storing value contexts}
+\label{fig:valuecontexts}
+\end{figure}
+
+\item \emph{ContextTransition}: This module stores context transition graph which is a method of representing call strings and provides an API to access
+it. The class diagram for this module in shown in figure \ref{fig:contexttransition}.
+
+Each context is represented as a node in a graph. Each function call in the program adds an edge from a caller context to callee context. 
+It is implemented in \emph{ContextTransition.java}. A Hashmap is used to store this information. The key consists of a combination of caller context id
+and  \emph{ICFGnode} of the function call. The Value consist of the callee context id. Bi-directional mappings are maintained using two hash maps which stores 
+mapping in both the directions. 
+
+The key value mapping for the data structure is,
+\newline
+\emph{(caller context id, Call site) $\leftrightarrow $ callee context id}
+\newline
+\newline
+% \begin{figure}
+% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/ContextTransition_C.eps}
+% \caption{Class Diagram for ContextTransition}
+% \label{fig:contexttransition}
+% \end{figure}
+
+\item \emph{DFSolverLogger}: This module provides utilities for logging, measuring performance parameters of the core solver.
+\item \emph{InterproceduralWorklist}: This module manages work list and applies a priority scheme to the work list. The class diagram for this module is 
+shown in figure \ref{fig:interproceduralworklist}.
+
+% \begin{figure}[H]
+% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/InterproceduralWL_C.eps}
+% \caption{Class Diagram for Interprocedural work list}
+% \label{fig:interproceduralworklist}
+% \end{figure}
+
+\end{enumerate}
+
+
 
 \chapter{User Manual of PRISM} \label{ap:A}
-This section describes setting up PRISM on ubuntu system. First section describes steps for setting up PRISM and how to generate an analyzer.
+This section describes setting up PRISM on Ubuntu system. First section describes steps for setting up PRISM and how to generate an analyzer.
 Second section describes how to analyze a program using generated analyzer.
 
 \section{Steps for setting up PRISM on Ubuntu and generating the analyzer}
