@@ -44,8 +44,8 @@ data flow can lead to significant savings.
 We first describe PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC).
 We next present the enhancements done to the PRISM solver to add the capabilities of incremental analysis, elaborating on the challenges faced and the changes made. 
 Such incremental analysis methods are well studied for bit-vector framework. 
-However, these methods are not directly applicable to non bit-vector framework. 
-This report also presents some challenges involved and possible solutions for doing incremental analysis for non bit-vector framework.
+However, these methods are not directly applicable to General framework. 
+This report also presents some challenges involved and possible solutions for doing incremental analysis for General framework.
 
 \end{abstract}
 %\end{comment}
@@ -398,9 +398,10 @@ framework. It describes the implemented Liveness-based Inter-procedural Reaching
 
 
 \section{Organization of the report}
-The report is organized as follows. Chapter 2 describes incremental analysis and issues in doing incremental analysis for non-bit vector framework.
-Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Inter-procedural Reaching Definition analysis in 
-PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5. Chapter 6 describes some extensions
+The report is organized as follows. Chapter 2 describes incremental analysis for bit-vector framework.
+Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Reaching Definition analysis in 
+PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5.
+Chapter 6 describes some of issues in doing incremental analysis for General framework. Chapter 7 describes some extensions
 that can be made to the current work. 
 
 
@@ -1461,7 +1462,7 @@ by PRISM framework as input and generates a result.
 The steps for configuring and running the analyzer are given in the Appendix~\ref{ap:A}.
 
 \section{Bi-directional Solver}
-In this section, we described the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
+In this section, we describe the Bi-directional~\cite{thesis_v} solver, its modules and its limitations.
 The Kulang, a specification language, is used to specify the data flow analysis in PRISM. The bi-directional Kulang compiler parses the specifications
 and generates java classes. The Bi-directional Solver invokes the generated java classes to solve the data flow problem.
 
@@ -1843,13 +1844,13 @@ The performance measurement of reaching definition with liveness is shown in tab
 \end{table}
 
 
-% Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
-% \begin{figure}[p]	
-% \centering
-% \includegraphics[width=0.8\textwidth]{graph.eps}
-% \caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
-% \label{fig:bench_mark}
-% \end{figure}
+Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
+\begin{figure}[p]	
+\centering
+\includegraphics[width=0.8\textwidth]{graph.eps}
+\caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
+\label{fig:bench_mark}
+\end{figure}
 
 \section{Summary}
 We have implemented a query for reaching definition analysis with and without liveness using PRISM. Other queries which are 
@@ -1976,15 +1977,22 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 \section{Steps to Run Incremental Driver}
 
 \section{Incremental Reaching Definition Analysis}
-Using Incremental Solver we have performed reaching definition analysis. Specification for reaching definition analysis consist of following parts:
+Using Incremental Solver we have performed reaching definition analysis. It consists of two following parts:
+% Specification for reaching definition analysis consist of following parts:
 \begin{itemize}
- \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
+\item Specification for reaching definition analysis
+  \begin{itemize}
+  \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
  each statement.  It is specified in the Kulang specification. 
   \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
- \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
+  \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
  Since Kulang does not currently support specification for inter-procedural analysis, they are implemented in java.
+\end{itemize}
+\item Java code for creating affected region:
+\begin{itemize}
  \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
  analysis. The affected region creation algorithm, and hence the implementation depend on the kind of analysis.
+ \end{itemize}
 \end{itemize}
 
 
@@ -2014,8 +2022,7 @@ run exhaustive analysis, incremental analysis won't suffice.
 \item \textbf{There is no structural change in the graph.}
 The reason for making this simplifying assumptions is that the output from the old solver is read from a text file. If the output was
 serialized in form of PRISM objects, we could have handled structural changes as well.
-\item \textbf{A name can refer to a single variable in a program at any given program point.}
-\item \textbf{The past information is stored flow sensitively.}
+
 
 % Violation of either of the above two assumption will necessitate another run of the exhaustive analysis.
 \end{itemize}
@@ -2023,7 +2030,12 @@ serialized in form of PRISM objects, we could have handled structural changes as
 
 The results from the old solver are stored in a text file, and not serialized into PRISM objects.
 This renders it impossible to deserialize the results from the old solver and to serialize our results back.
-Late discovery of this issue has prevented any corrective measures. Therefore, we take the above two assumptions. 
+Late discovery of this issue has prevented any corrective measures. Therefore, we take the following two assumptions. 
+\begin{itemize}
+\item \textbf{A name can refer to a single variable in a program at any given program point.}
+\item \textbf{The past information is stored flow sensitively.}
+\end{itemize}
+
 
 The following are the main limitations of the Solver:
 \begin{itemize}
@@ -2036,7 +2048,7 @@ The following are the main limitations of the Solver:
 
 
 \section{Testing}
-In the absence of serialization of IR, it was not possible to test the code for real world application.
+In the absence of serialization of IR, it was not possible to test the code for real world applications.
 Hence, we had to artificially add the changes to check the performance of the Incremental Solver.
 Some of the test cases that we used to check the Incremental Solver are as follows:
 \begin{itemize}
@@ -2053,8 +2065,8 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \begin{figure}[h]
 \centering
 \psset{unit=1mm}
-\begin{pspicture}(0,0)(150,250)
-\psframe(0,0)(150,250)
+\begin{pspicture}(0,20)(150,250)
+% \psframe(0,20)(150,265)
 \rput(60,270){\rnode{a}{main}}
 \putnode{n1}{origin}{60}{265}{%
      \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
@@ -2083,28 +2095,35 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 
 \putnode{n8}{n6}{15}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$z=$}}
-\rput(100,200){\rnode{a}{n7}}
+\rput(71,187){\rnode{a}{n8}}
      
 \putnode{n10}{n8}{0}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func1( )}}
+     \rput(67,174){\rnode{a}{n10}}
 
 \putnode{n13}{n10}{-40}{0}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+     \rput(30,174){\rnode{a}{n13}}
 
 \putnode{n14}{n13}{0}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+     \rput(30,161){\rnode{a}{n14}}
      
 \putnode{n7}{n5}{25}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$a=$}}
+\rput(103,200){\rnode{a}{n7}}
 
 \putnode{n9}{n7}{0}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+\rput(100,187){\rnode{a}{n9}}
      
 \putnode{n11}{n9}{0}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func( )}}
+     \rput(99,174){\rnode{a}{n11}}
 
 \putnode{n12}{n11}{-20}{-13}{%
      \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$a=$}}
+     \rput(79,161){\rnode{a}{n12}}
 
 
 \ncline{->}{n1}{n2}
@@ -2129,30 +2148,31 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \rput(20,125){\rnode{f1}{func()}}	
 \putnode{n1}{origin}{20}{120}{%
      \psframebox[linewidth=.3,framesep=1.7]{ \hspace{10mm}}}
-\rput(40,80){\rnode{a}{n1}}
+\rput(10,120){\rnode{a}{n15}}
 
 \putnode{n0}{n1}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{$a=$}}
+     \rput(10,105){\rnode{a}{n16}}
 
 \putnode{n2}{n0}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-% \rput(40,65){\rnode{a}{n2}}
+ 
 
 \putnode{n3}{n2}{-20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-% \rput(20,50){\rnode{a}{n3}}
+ \rput(10,90){\rnode{a}{n17}}
 
 \putnode{n4}{n2}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-% \rput(57,50){\rnode{a}{n4}}
+ \rput(-10,75){\rnode{a}{n18}}
 
 \putnode{n5}{n2}{0}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-% \rput(40,35){\rnode{a}{n5}}
+ \rput(10,60){\rnode{a}{n20}}
 
 \putnode{n6}{n5}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-% \rput(37,20){\rnode{a}{n6}}
+ \rput(27,75){\rnode{a}{n19}}
 
 \ncline{->}{n1}{n0}
 \ncline{->}{n0}{n2}
@@ -2168,27 +2188,27 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \rput(120,125){\rnode{f2}{func1()}}
 \putnode{n1}{origin}{120}{120}{%
      \psframebox[linewidth=.3,framesep=1.7]{ \hspace{10mm}}}
-% \rput(40,80){\rnode{a}{n1}}
+ \rput(110,120){\rnode{a}{n21}}
 
 \putnode{n2}{n1}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-% \rput(40,65){\rnode{a}{n2}}
+ \rput(109,105){\rnode{a}{n22}}
 
 \putnode{n3}{n2}{-20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
-% \rput(20,50){\rnode{a}{n3}}
+ \rput(87,90){\rnode{a}{n23}}
 
 \putnode{n4}{n2}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-% \rput(57,50){\rnode{a}{n4}}
+ \rput(129,90){\rnode{a}{n24}}
 
 \putnode{n5}{n2}{0}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{$m=$}}
-% \rput(40,35){\rnode{a}{n5}}
+ \rput(110,75){\rnode{a}{n25}}
 
 \putnode{n6}{n5}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-% \rput(37,20){\rnode{a}{n6}}
+\rput(108,60){\rnode{a}{n26}}
 
 \ncline{->}{n1}{n2}
 \ncline{->}{n2}{n3}
@@ -2214,7 +2234,7 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Issues in Incremental Analysis in General framework}
+\chapter{Issues in Incremental Analysis for General framework}
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
 Bit-Vector frameworks cover a relatively simpler case where the data flow information of 
 different entities is independent of each other. In situations where the data flow information
@@ -2225,7 +2245,7 @@ In this chapter, we will discuss some of the issues in extending the existing In
 Analysis to a general framework by means of constant propagation analysis.
 
 
-\section{Issues in Incremental Analysis for Constant Propagation Analysis}
+\section{Issues in Incremental Analysis for Constant Propagation}
 Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
 with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
 to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
@@ -2894,9 +2914,10 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
-In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. 
+In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. This optimization is applicable
+for Bit-vector vector framework also. 
 
-This optimization can work only on single change in a program. Handling for multiple changes need to be studied.
+This optimization can work only on single change in a program. Handling for multiple changes need to be studied. 
 
 
 
@@ -3428,7 +3449,7 @@ The following three limitations prevent us from testing our solver on real life,
  a loss of information.
  \item \textbf{Persistence of Results} The results of PRISM solver are currently written to a text file, whereas they should 
  ideally be packed in a \emph{result} object provided by the PRISM Solver and persisted.
- \item \textbf{Creation of Affected Region} From the fact that creation of affected region is a analysis specific, the code for this has to be written manually.
+ \item \textbf{Creation of Affected Region} From the fact that creation of affected region is a analysis specific, currently the code for this has to be written manually.
  Future work is to change the Kulang compiler to generate the affected region from the flow function.
  
 \end{itemize}
