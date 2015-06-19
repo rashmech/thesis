@@ -1340,7 +1340,7 @@ Four types of flow function exits - \texttt{ForwardNodeflow}, \texttt{BackwardNo
 \hspace{10mm}\textit{Return variable;}
 % \end{lstlisting}
  
- \item
+\ item
 %  \begin{lstlisting}[]  % Start your code-block
 
 \textit{Forward/BackwardEdgeflow(IDENT:nodeType, IDENT:LatticeType)}
@@ -1522,7 +1522,7 @@ implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liven
 Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
 liveness.
 
-\section{Inter-procedural reaching definition analysis}
+\section{Reaching definition analysis}
 This section describes the flow functions for Intra-procedural reaching definition analysis.
 The Data flow equations for Reaching Definition analysis is shown below:
 
@@ -1603,7 +1603,7 @@ Java code for function `\texttt{HasElement}' is shown below :
 
 \end{lstlisting}
 
-\section{Liveness-Based Inter-procedural reaching definition analysis}
+\section{Liveness-Based Reaching Definition Analysis}
 This section describes the flow functions for Liveness-Based Inter-procedural reaching definition analysis. This is a bi-directional
 analysis and hence flow function will take two lattices \texttt{R} and \texttt{L} as a parameter. Lattice \texttt{R} is for reaching definition analysis and
 \texttt{L} is for strongly liveness analysis. In first phase, it will do strongly liveness analysis which is a backward flow analysis.
@@ -1785,7 +1785,8 @@ Following is the Java code for function `\texttt{isLive}'
 \section{SPEC Benchmark Evaluation}
 In order to compare the performance between two analysis i.e. reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
 For each query, we measured the average size of the set of data flow values computed at each program point. In general, average size of the set at each
-program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+program point in liveness-based analysis is much smaller then that of the normal reaching definition analysis. However, PRISM solver is not including local
+and global declarations as a statement and thus there is a possibility that the results from the benchmark may not concur with the actual numbers.
 
 Performance measurement of reaching definition without liveness is shown in table~\ref{tab:performance_without_l}.
 \begin{table}[H]
@@ -1842,13 +1843,13 @@ The performance measurement of reaching definition with liveness is shown in tab
 \end{table}
 
 
-Figure~\ref{fig:bench_mark} shows a comparision between two analysis.
-\begin{figure}[p]	
-\centering
-\includegraphics[width=0.8\textwidth]{graph.eps}
-\caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
-\label{fig:bench_mark}
-\end{figure}
+% Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
+% \begin{figure}[p]	
+% \centering
+% \includegraphics[width=0.8\textwidth]{graph.eps}
+% \caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
+% \label{fig:bench_mark}
+% \end{figure}
 
 \section{Summary}
 We have implemented a query for reaching definition analysis with and without liveness using PRISM. Other queries which are 
@@ -1856,12 +1857,13 @@ implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liven
 and Strong liveness analysis with aliasing. 
 
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
-For each query we measured the average size of the set at each program point. In general, we observe that anerage size of the set at each program 
-point in liveness-based analysis is much smaller then that of the normal reaching definition analysis.
+For each query we measured the average size of the set at each program point. It is observed that the average size of the set at each program 
+point in liveness-based analysis is much smaller than that of the normal reaching definition analysis with a possibility of the empirical
+values deviating from the actual values owing to non inclusion of the local and global statements.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Incremental PRISM Solver}
+\chapter{An Incremental Solver for PRISM}
 In this section, we describe implementation of the Incremental Solver. It is divided into the following parts:
 
 \begin{itemize}
@@ -1870,8 +1872,8 @@ In this section, we describe implementation of the Incremental Solver. It is div
 \item \textbf{Data flow computation}
 It consist of following two parts:
 \begin{itemize}
- \item \textit{Re-initialization} which constructs the affected region.
- \item  \textit{Re-computation} which identifies boundary nodes and computes the information only for the affected region (set of affected node).
+ \item \textit{Re-initialization} which constructs the affected region (set of affected node).
+ \item  \textit{Re-computation} which identifies boundary nodes and computes the information only for the affected region.
 \end{itemize}
 
 \item \textbf{Update} Merges the computed information for the affected region with the old information.
@@ -1880,11 +1882,13 @@ It consist of following two parts:
 
 
 \section{Architecture of Incremental Solver}
-Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Changed Node Detector}
+Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Preprocessor}
 takes \textit{Old IR} and \textit{New IR} as inputs. It compares the two IRs and detects the changed nodes. 
-Output of the \textit{Changed Node Detector} is then passed to the \textit{Preprocessor}. The \textit{Preprocessor} computes 
+Output of the \textit{Preprocessor} is then passed to the \textit{Re-initializer}. The \textit{Re-initializer} computes 
 the affected region, a set of affected nodes, and a set of boundary nodes. The \textit{Solver} computes the data flow information
-for the affected region and passes the results to the \textit{Merger}. \textit{Merger} merges the solution and produces the updated results. 
+for the affected region and passes the results to the \textit{Merger}. \textit{Merger} merges the solution and produces the updated results.
+Note that recreation of specifications for the given analysis is not required in Incremental analysis. Therefore, solver will use the old generated specifications.
+
 
 \begin{figure}[H]
 \centering
@@ -1897,13 +1901,13 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
      }
   
 \putnode{n2}{n1}{40}{-5}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Changed Node Detector}}
+     \psframebox[linewidth=.3,framesep=1.7]{Preprocessor}}
      
 \putnode{n3}{n1}{0}{-10}{%
 	  {\textbf{New IR}}
      }
 \putnode{n4}{n2}{50}{0}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Preprocessor}}
+     \psframebox[linewidth=.3,framesep=1.7]{Re-initializer}}
      
 \putnode{n5}{n4}{0}{-30}{%
      \psframebox[linewidth=.3,framesep=1.7]{Solver}}
@@ -1917,9 +1921,9 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
 	  {\textbf{Updated Results}}
      }
 
-\putnode{n8}{n5}{-56}{15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{Generated Files by Kulang Compiler}}
-\putnode{n11}{n8}{33}{0}
+\putnode{n8}{n5}{-40}{15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{Query specification}}
+\putnode{n11}{n8}{18}{0}
 
 \putnode{n9}{n5}{-40}{0}{%
      \psframebox[linewidth=.3,framesep=1.7]{Utility functions}}
@@ -1969,9 +1973,10 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \item oldIRnode: It stores old IR node information
 %  \
 % \end{itemize}
+\section{Steps to Run Incremental Driver}
+
 \section{Incremental Reaching Definition Analysis}
-We implemented context sensitive incremental reaching definition analysis. The implementation
-consists of following parts:
+Using Incremental Solver we have performed reaching definition analysis. Specification for reaching definition analysis consist of following parts:
 \begin{itemize}
  \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
  each statement.  It is specified in the Kulang specification. 
@@ -1994,22 +1999,213 @@ consists of following parts:
 
 \section{Assumptions and Limitation }
 
-The assumptions that we make are as follows:
+The assumptions that we make are listed with the corresponding justifications as follows:
 \begin{itemize}
-\item There is no structural change in the graph.
-\item Pointer information will remain same,
-\item There is no change in the context information.
-\item Declaration of variables haven't change.
-\item A name can refer to a single variable in a program at any given program point.
-\item The past information is stored flow sensitively.
+\item \textbf{Pointer information will remain same.}
+At present we have not implemented incremental analysis for general framework. So, it is not possible to incrementally update the pointer information.
+% During runtime, a pointer may point to the heap and thus incrementally updating the pointer information would be complicated, which
+% gives room to this simplifying assumption.
+\item \textbf{There is no change in the context information.}
+Otherwise, it is not possible to map old information to the new information.
+
+\item \textbf{Declarations of variables haven't change.}
+Change of declaration implies that there is a change in the lattice for that particular variable. For handling such changes, we need to 
+run exhaustive analysis, incremental analysis won't suffice.
+\item \textbf{There is no structural change in the graph.}
+The reason for making this simplifying assumptions is that the output from the old solver is read from a text file. If the output was
+serialized in form of PRISM objects, we could have handled structural changes as well.
+\item \textbf{A name can refer to a single variable in a program at any given program point.}
+\item \textbf{The past information is stored flow sensitively.}
+
+% Violation of either of the above two assumption will necessitate another run of the exhaustive analysis.
 \end{itemize}
 
 
 The results from the old solver are stored in a text file, and not serialized into PRISM objects.
-This renders it impossible to deserialize the results and to serialize our results back.
-Late discovery of this issue has prevented any corrective measures. 
-However, under the above stated assumptions, the only limitation that stems from reading from a
-text file is that the result is stored in a non standard format by the solver.
+This renders it impossible to deserialize the results from the old solver and to serialize our results back.
+Late discovery of this issue has prevented any corrective measures. Therefore, we take the above two assumptions. 
+
+The following are the main limitations of the Solver:
+\begin{itemize}
+ \item Affected region which is analysis specific, the code for this has to be written manually.
+ \item The result is stored in a non-standard format by the Solver.
+ \end{itemize}
+
+% However, under the above stated assumptions, the following only limitation that stems from reading from a
+% text file is that the result is stored in a non standard format by the solver.
+
+
+\section{Testing}
+In the absence of serialization of IR, it was not possible to test the code for real world application.
+Hence, we had to artificially add the changes to check the performance of the Incremental Solver.
+Some of the test cases that we used to check the Incremental Solver are as follows:
+\begin{itemize}
+ \item \textbf{Changed statement contains a definition of global variable} Consider the control flow graph in figure~\ref{fig:testCase1}. Let $a$ be a global variable
+ and $n7$ be the changed node. The Affected region created by the solver is \textbf{AR} = $< n7, n9, n11, n15, n16 >$ and $n7$ is the boundary node.
+ The nodes traversed by the solver are $<  n7, n9, n11, n15, n16 >$.
+ \item \textbf{Changed statement contains a definition of local variable} Let $a$ is a local variable and $n7$ be the changed node in figure~\ref{fig:testCase1}.
+ The affected region created by the solver is \textbf{AR} = $< n7, n9, n11, n12 >$ and boundary nodes are $n7$ and $n12$.
+ The nodes traversed by the solver are $<  n7, n9, n11, n12 >$.
+ \item Let the changed node be $n8$. Variable $z$ is passed as a parameter in function \textit{func1(z)} at $n10$. The affected region created by the solver is 
+ \textbf{AR} = $< n8, n10, n21, n22, n23, n24, n25, n12, n3, n4 >$ and boundary nodes are $n8$ and $n3$. The node traversed by the solver are $< n8, n10, n21, n22, n23, n24, n25, n12, n3, n4 >$.
+\end{itemize}
+
+\begin{figure}[h]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(150,250)
+\psframe(0,0)(150,250)
+\rput(60,270){\rnode{a}{main}}
+\putnode{n1}{origin}{60}{265}{%
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
+\rput(50,265){\rnode{a}{n1}}   
+
+\putnode{n2}{n1}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{if( )}}
+\rput(52,252){\rnode{a}{n2}}    
+
+\putnode{n3}{n2}{25}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{while( )}}
+\rput(74,239){\rnode{a}{n3}} 
+
+\putnode{n4}{n3}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$z=1$}}
+\rput(76,226){\rnode{a}{n4}} 
+     
+     
+\putnode{n5}{n4}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{if( )}}
+\rput(76,213){\rnode{a}{n5}}
+
+\putnode{n6}{n5}{-20}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{if( )}}
+\rput(56,200){\rnode{a}{n6}}
+
+\putnode{n8}{n6}{15}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$z=$}}
+\rput(100,200){\rnode{a}{n7}}
+     
+\putnode{n10}{n8}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func1( )}}
+
+\putnode{n13}{n10}{-40}{0}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+
+\putnode{n14}{n13}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+     
+\putnode{n7}{n5}{25}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$a=$}}
+
+\putnode{n9}{n7}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{\hspace{10mm}}}
+     
+\putnode{n11}{n9}{0}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func( )}}
+
+\putnode{n12}{n11}{-20}{-13}{%
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{$a=$}}
+
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncline{->}{n5}{n7}
+\ncline{->}{n7}{n9}
+\ncline{->}{n9}{n11}
+\ncline{->}{n11}{n12}
+\ncline{->}{n6}{n8}
+\ncline{->}{n8}{n10}
+\ncline{->}{n10}{n12}
+\ncline{->}{n6}{n13}
+\ncline{->}{n13}{n14}
+\ncline{->}{n2}{n13}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
+		linearc=0.5,offsetA=2, offsetB=2]{->}{n12}{n3}
+		
+
+\rput(20,125){\rnode{f1}{func()}}	
+\putnode{n1}{origin}{20}{120}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ \hspace{10mm}}}
+\rput(40,80){\rnode{a}{n1}}
+
+\putnode{n0}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$a=$}}
+
+\putnode{n2}{n0}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+% \rput(40,65){\rnode{a}{n2}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+% \rput(20,50){\rnode{a}{n3}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+% \rput(57,50){\rnode{a}{n4}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+% \rput(40,35){\rnode{a}{n5}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+% \rput(37,20){\rnode{a}{n6}}
+
+\ncline{->}{n1}{n0}
+\ncline{->}{n0}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+\ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
+		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+		
+		
+\rput(120,125){\rnode{f2}{func1()}}
+\putnode{n1}{origin}{120}{120}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ \hspace{10mm}}}
+% \rput(40,80){\rnode{a}{n1}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+% \rput(40,65){\rnode{a}{n2}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
+% \rput(20,50){\rnode{a}{n3}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+% \rput(57,50){\rnode{a}{n4}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$m=$}}
+% \rput(40,35){\rnode{a}{n5}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+% \rput(37,20){\rnode{a}{n6}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+% \ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
+% 		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+
+
+		
+\end{pspicture}
+\caption{Test case}
+   \label{fig:testCase1}
+\end{figure}
+
 
 
 
@@ -2018,7 +2214,7 @@ text file is that the result is stored in a non standard format by the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Incremental Analysis for General framework}
+\chapter{Issues in Incremental Analysis in General framework}
 The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
 Bit-Vector frameworks cover a relatively simpler case where the data flow information of 
 different entities is independent of each other. In situations where the data flow information
@@ -2029,7 +2225,7 @@ In this chapter, we will discuss some of the issues in extending the existing In
 Analysis to a general framework by means of constant propagation analysis.
 
 
-\section{The Theory of Constant Propagation Analysis}
+\section{Issues in Incremental Analysis for Constant Propagation Analysis}
 Consider a component lattice for Constant Propagation analysis in fig~\ref{fig:non_c_l}. Given a variable $x$ and a program point $u$, apart from associating integer constants
 with $x$ at $u$, this analysis associates two additional values: \textit{undef} to indicate that no definition of $x$ has been seen along any path reaching $u$, and \textit{nonconst}
 to indicate that $x$ can have different values at $u$ along different paths reaching $u$.
@@ -2134,7 +2330,7 @@ Following are the possible flow functions in Constant Propagation analysis:
 \end{figure}
 
  
-\subsection{Changes in Constant Propagation Analysis}
+\subsection{Possible Changes in Flow Functions}
 In addition to the changes given in section \ref{sec:bit-vector}, a change from intermediate
 level to other levels is also possible.
 \begin{itemize}
@@ -2444,13 +2640,13 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
    \label{fig:inter_otherlevels}
 \end{figure}
 
-\section{Issues in incremental analysis in general framework}
+\subsection{Need for Affected Region for Every Change }
 
 Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
 the change to its neighboring nodes since it may depend on the OUT information of the node.
 We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
 then according to existing incremental analysis, this is a change to bottom and we can directly propagate
-the change to its neighboring nodes. However, this is not the case. 
+the change to its neighboring nodes. However, this is incorrect. 
 The information at the IN of node 4 is bottom because of the expression $b=2$ in node 4.
 If we will propagate $\bot$ to neighboring nodes, it will give incorrect results.
 Unlike bit-vector framework, we may need to create an affected region even if there is a change to bottom.
@@ -2511,12 +2707,11 @@ This optimization is based on the observation that some boundary nodes can be ch
 by the concept of \emph{dominance frontier}. We define the concept of \textit{Dominance Frontier} before elaborating on the optimization idea.
 
 \subsection*{Dominance Frontier}
-%TODO: add \cite{}
 
 Let $n$ and $m$ be nodes in the CFG. The node $n$ is said to \textit{dominate} $m$ ($n\geq m$), if every path from \textbf{Start} to $m$ passes through $n$.
 If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m$.  
 
-The \textit{dominance frontier} of a node $n$, denoted by \textbf{df(n)} is given as:
+The \textit{dominance frontier}~\cite{book} of a node $n$, denoted by \textbf{df(n)} is given as:
 \begin{equation}
 \begin{split}
 \mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n  m )\} \\	  
@@ -2575,9 +2770,53 @@ construction itself, without further delays.
 
 \paragraph{All Dominance Frontier nodes are Boundary nodes (but not vice versa)}
 Consider a node $n$, in an affected region (AR) and $c$ be the changed node. If $n$ is a dominance frontier of $c$,
-then $n$ must be a boundary node. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
+then $n$ must be a boundary node. This follows from the fact that there is some path that reaches $m$ without passing through the changed node $c$. But if some node $m$ is a boundary node of AR(C), then $m$ need not be a dominance frontier.
 We explain this via an example in figure~\ref{fig:eg_dominance_frontier}. If $i$ is a changed node, then $AR(i) = <i, j, l, m, n>$
 Here $m$ is a boundary node but it is dominated by block $i$ and hence not its dominance frontier.
+
+\begin{figure}[!htb]
+\centering
+\psset{unit=1mm}
+\begin{pspicture}(0,0)(100,90)
+%%\psframe(0,0)(100,90)
+\putnode{n1}{origin}{50}{80}{%
+     \psframebox[linewidth=.3,framesep=1.7]{ $a=$}}
+\rput(40,80){\rnode{a}{i}}
+
+\putnode{n2}{n1}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$if(e)$}}
+\rput(40,65){\rnode{a}{j}}
+
+\putnode{n3}{n2}{-20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$a=2$}}
+\rput(20,50){\rnode{a}{k}}
+
+\putnode{n4}{n2}{20}{-15}{%
+     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
+\rput(60,50){\rnode{a}{l}}
+
+\putnode{n5}{n2}{0}{-30}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(40,35){\rnode{a}{m}}
+
+\putnode{n6}{n5}{0}{-15}{%
+     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
+\rput(40,20){\rnode{a}{n}}
+
+\ncline{->}{n1}{n2}
+\ncline{->}{n2}{n3}
+\ncline{->}{n3}{n5}
+\ncline{->}{n2}{n4}
+\ncline{->}{n4}{n5}
+\ncline{->}{n5}{n6}
+% \ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
+% 		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
+		
+\end{pspicture}
+\caption{Control flow graph for constant propagation analysis}
+   \label{fig:eg_dominance_frontier}
+\end{figure}
+
 
 \paragraph{Possible Removal Candidates Form a Dominance Frontier}
 Let us consider the example in figure~\ref{fig:incr_non-bit2}.
@@ -2649,55 +2888,15 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 \end{figure}
 
 
-\begin{figure}[!htb]
-\centering
-\psset{unit=1mm}
-\begin{pspicture}(0,0)(100,90)
-%%\psframe(0,0)(100,90)
-\putnode{n1}{origin}{50}{80}{%
-     \psframebox[linewidth=.3,framesep=1.7]{ $a=$}}
-\rput(40,80){\rnode{a}{i}}
-
-\putnode{n2}{n1}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$if(e)$}}
-\rput(40,65){\rnode{a}{j}}
-
-\putnode{n3}{n2}{-20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$a=2$}}
-\rput(20,50){\rnode{a}{k}}
-
-\putnode{n4}{n2}{20}{-15}{%
-     \psframebox[linewidth=.3,framesep=1.7]{$b=2$}}
-\rput(60,50){\rnode{a}{l}}
-
-\putnode{n5}{n2}{0}{-30}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,35){\rnode{a}{m}}
-
-\putnode{n6}{n5}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5]{\hspace{10mm}}}
-\rput(40,20){\rnode{a}{n}}
-
-\ncline{->}{n1}{n2}
-\ncline{->}{n2}{n3}
-\ncline{->}{n3}{n5}
-\ncline{->}{n2}{n4}
-\ncline{->}{n4}{n5}
-\ncline{->}{n5}{n6}
-% \ncloop[armA=3,armB=3,angleA=-90,angleB=90,loopsize=-30,
-% 		linearc=0.5,offsetA=2, offsetB=2]{->}{n5}{n2}
-		
-\end{pspicture}
-\caption{Control flow graph for constant propagation analysis}
-   \label{fig:eg_dominance_frontier}
-\end{figure}
 
 
 \section{Reducing the size of the AR region}
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
-In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region.
+In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. 
+
+This optimization can work only on single change in a program. Handling for multiple changes need to be studied.
 
 
 
@@ -3199,7 +3398,7 @@ Given a changed node $N$, the detection process proceeds as follows
   
 \end{comment}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Future Work}
+\chapter{Conclusion and Future Work}
 %  
 % This report describes the method of doing incremental analysis in bit-vector framework. This method performs incremental analysis for a single change in a program
 % but in general multiple changes are also possible, so we need a method which can also perform incremental analsis for multiple changes.
@@ -3214,13 +3413,24 @@ Given a changed node $N$, the detection process proceeds as follows
 % defined. It allows those analysis which has single data flow variable. Therefore, the anlysis writer needs to convert multi-variable equation to single-variable 
 % equation which is an extra work done by the writer. The specifications can be extended to allow analysis containig multiple variables.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The following two limitations prevent us from testing our solver on real life, industry scale code bases:
+Incremental analysis is a method of avoiding redundant analysis in the case when only a part of the program has changed.
+In this report, we discussed the theory and implementation of incremental analysis for bit-vector frameworks, and 
+proposed methods of extending it to general frameworks. The experiments on our test set have yielded motivating results, 
+with savings of up to X\% in terms of data flow information computed.
+We also sketch a number of possible improvements in the implementation that may add to the performance and scalability of
+the incremental solver.
+
+
+The following three limitations prevent us from testing our solver on real life, industry scale code bases:
 \begin{itemize}
 
  \item \textbf{Non inclusion of global and local declarations} PRISM solver is not including local and global declarations as a statement which may result in
  a loss of information.
  \item \textbf{Persistence of Results} The results of PRISM solver are currently written to a text file, whereas they should 
  ideally be packed in a \emph{result} object provided by the PRISM Solver and persisted.
+ \item \textbf{Creation of Affected Region} From the fact that creation of affected region is a analysis specific, the code for this has to be written manually.
+ Future work is to change the Kulang compiler to generate the affected region from the flow function.
+ 
 \end{itemize}
 
 Resolving these issues will help us in exposing our solver to some new challenges that might lead to new insights and avenues for improvements.
@@ -3319,11 +3529,11 @@ of another HashMap containing \emph{(contextId, data flow value)} pairs.
 
 
 
-% \begin{figure}
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/DFStore_C.eps}
-% \caption{Class Diagram for DFStore}
-% \label{fig:dfstore}
-% \end{figure}
+\begin{figure}
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/DFStore_C.eps}
+\caption{Class Diagram for DFStore}
+\label{fig:dfstore}
+\end{figure}
 
 
 \item \emph{ValueContexts}: This module holds information about contexts formed during the analysis.
@@ -3375,21 +3585,21 @@ The key value mapping for the data structure is,
 \emph{(caller context id, Call site) $\leftrightarrow $ callee context id}
 \newline
 \newline
-% \begin{figure}
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/ContextTransition_C.eps}
-% \caption{Class Diagram for ContextTransition}
-% \label{fig:contexttransition}
-% \end{figure}
+\begin{figure}
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/ContextTransition_C.eps}
+\caption{Class Diagram for ContextTransition}
+\label{fig:contexttransition}
+\end{figure}
 
 \item \emph{DFSolverLogger}: This module provides utilities for logging, measuring performance parameters of the core solver.
 \item \emph{InterproceduralWorklist}: This module manages work list and applies a priority scheme to the work list. The class diagram for this module is 
 shown in figure \ref{fig:interproceduralworklist}.
 
-% \begin{figure}[H]
-% \includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/InterproceduralWL_C.eps}
-% \caption{Class Diagram for Interprocedural work list}
-% \label{fig:interproceduralworklist}
-% \end{figure}
+\begin{figure}[H]
+\includegraphics[scale=0.8]{class_diagrams/updatedClassDiagrams/InterproceduralWL_C.eps}
+\caption{Class Diagram for Interprocedural work list}
+\label{fig:interproceduralworklist}
+\end{figure}
 
 \end{enumerate}
 
@@ -3490,7 +3700,7 @@ Following are some of the API to excess the expression in IR :
 
 
 \chapter{Specifications of developed kulang queries}\label{ap:C}
-\section{Intra-procedural Reaching definition analysis}
+\section{Reaching definition analysis}
 Following is the specification for Intra-procedural reaching definition analysis.
 
 \begin{lstlisting}
@@ -3593,7 +3803,7 @@ ForwardEdgeflow(E: _, S: L)
 \end{lstlisting}
 
 
-\section{Liveness-based Intra-procedural Reaching definition analysis}
+\section{Liveness-based Reaching definition analysis}
 Following is the specification for Liveness-based Intra-procedural Reaching definition analysis.
 \begin{lstlisting}
 //Package declaration

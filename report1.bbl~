@@ -2,7 +2,7 @@
 
 \bibitem{thesis_sir}
 Uday~P. Khedkar.
-\newblock {\em A Generalised Theory of Bit Vector Data Flow Analysi}.
+\newblock {\em A Generalised Theory of Bit Vector Data Flow Analysis}.
 \newblock PhD thesis, Computer Science and Engineering, IIT Bombay, 1995.
 
 \bibitem{thesis_m}
@@ -14,6 +14,10 @@ Mukta Joglekar.
 Vinit Deodhar.
 \newblock {\em Bidirectional Context sensitive analysis framework in PRISM}.
 \newblock Mtech dissertation, Computer Science and Engineering, IIT Bombay, 2014.
+
+\bibitem{book}
+Uday P.Khedker, Amitabha Sanyal and Bageshri Karkare
+\newblock {\em Data Flow Analysis: Theory and Practices}.
 
 
 \bibitem{thesis_p}
