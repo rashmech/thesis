@@ -385,7 +385,7 @@ Therefore, incremental analysis is performed on the modified control flow graph 
 \end{figure}
 
 
-\section{Scope of the project}
+\section{Scope of the Project}
 
 This project aims at providing support for incremental data flow analysis in PRISM.
 Old version of PRISM~\cite{thesis_v} performs both unidirectional and bi-directional context sensitive analysis. 
@@ -397,7 +397,7 @@ frameworks. It describes the implemented Liveness-based Inter-procedural Reachin
 
 
 
-\section{Organization of the report}
+\section{Organization of the Report}
 The report is organized as follows. Chapter 2 describes incremental analysis for bit-vector frameworks.
 Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Reaching Definition analysis in 
 PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5.
@@ -451,8 +451,8 @@ In bit-vector analysis, following types of functions are possible.
  is 0 and \textit{KILL} is 1. Therefore, \textit{OUT}$_2 = 0$ or $\bot$. Flow function at n2 is a Lower function whose result is always $\bot$
  
  \item Propagate : It propagates the value at IN to OUT of the node. Consider an available expression analysis in 
- figure~\ref{fig:flow_func}(b). At node n2, \textit{GEN} is 0 and \textit{KILL} is 0. Therefore, \textit{OUT}$_2 =$\textit{IN}$_2$ . 
- Flow function at n2 propagates the value at the IN to OUT of the node n2	
+ figure~\ref{fig:flow_func}(b). At node n3, \textit{GEN} is 0 and \textit{KILL} is 0. Therefore, \textit{OUT}$_3 =$\textit{IN}$_3$ . 
+ Flow function at n3 propagates the value at the IN to OUT of the node n3	
  
  
  \begin{figure}[!htb]
@@ -476,7 +476,7 @@ In bit-vector analysis, following types of functions are possible.
      \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$a*b$}}
 \putnode{a}{n12}{-10}{0}{n1}
 \putnode{n22}{n12}{0}{-15}{%
-     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
+     \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{$a=$}}
 \putnode{a}{n22}{-10}{0}{n2}
 \putnode{n32}{n22}{0}{-15}{%
      \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
@@ -511,7 +511,7 @@ For a given entity, the following changes could happen as a consequence of some 
  \begin{figure}[!htb]
 \centering
 \psset{unit=1mm}
-\begin{pspicture}(0,10)(0,40)
+\begin{pspicture}(0,10)(0,60)
 %%\psframe(0,0)(50,50)
 \putnode{n1}{origin}{-50}{40}{%
      \psframebox[linewidth=.3,framesep=2.5]{raise}}
@@ -564,13 +564,13 @@ in flow functions for bottom to top change.}
 
 
 
-\subsubsection{Handling Top to Bottom change}
+\subsubsection{Handling Top to Bottom Change}
 Given that $\forall x \in L : x \sqcap \top = x$, a top value for a data flow property is an intermediate value until the analysis is
 completed. But in case of a bottom value, $\forall x \in L : x \sqcap \bot =\bot $. Thus, a bottom value is a final value even during analysis. So whenever 
 there is a top to bottom change in a program, the changes can be propagated directly to its neighbouring nodes.
 
 Consider an example of available expressions analysis for the control flow graph in figure~\ref{fig:top_to_bot_bitvector}. In this case, the expression 
-$b*c$ is available at the OUT of both node n1 and n3 (i.e. the data flow value for $a*b$ is top) and so is available at the IN of $n2$. Let an assignment
+$b*c$ is available at the OUT of both node n1 and n3 (i.e. the data flow value for $b*c$ is top) and so is available at the IN of $n2$. Let an assignment
 ``$c=$" be inserted after the computation of $b*c$ in node $n3$. After this change, $b*c$ is not available at the OUT of node n3, i.e. top to bottom change
 (refer to figure~\ref{fig:flow_func_top_to_bot}) at the OUT of $n3$ which in turn makes bottom at the IN of $n2$ since \textit{IN}$_2 = $\textit{OUT}$_1 \cap$ \textit{OUT}$_3 $,
 which implies that the value of \textit{IN}$_2 $ is determined by the value of \textit{OUT}$_3$ alone. Thus, the effect of top to bottom change
@@ -600,7 +600,7 @@ can be incorporated by directly propagating the change to its neighbour.
    \label{fig:top_to_bot_bitvector}
 \end{figure}
 
-\subsubsection{Handling Bottom to Top change}
+\subsubsection{Handling Bottom to Top Change}
 Bottom value is a final value even during the analysis. Thus, whenever there is a bottom to top change we cannot directly propagate the changes to its neighbours. 
 We need some more processing to incorporate this change.
 
@@ -613,14 +613,10 @@ The effect of bottom to top change can be incorporated in the following two step
 \item{Find out the data flow values, identified in the above step, which must remain bottom due to the effect of some other property.}
 \end{itemize}
 
-\subsubsection{Motivating Example}
-Consider a control flow graph as shown in Fig~\ref{fig:bottom_to_top_motivating_ex}. Table~\ref{tab:table_available_exp_bot_to_top} shows the result of available expression 
-analysis for Fig~\ref{fig:bottom_to_top_motivating_ex}.
-
 \begin{figure}[!htb]
 \centering
 \psset{unit=1mm}
-\begin{pspicture}(0,0)(100,90)
+\begin{pspicture}(0,15)(100,80)
 %%\psframe(0,0)(100,90)
 \putnode{n1}{origin}{50}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{ $a+b$}}
@@ -661,6 +657,12 @@ analysis for Fig~\ref{fig:bottom_to_top_motivating_ex}.
 \end{figure}
 
 
+\subsubsection{Motivating Example}
+Consider a control flow graph as shown in Fig~\ref{fig:bottom_to_top_motivating_ex}. Table~\ref{tab:table_available_exp_bot_to_top} shows the result of available expression 
+analysis for Fig~\ref{fig:bottom_to_top_motivating_ex}.
+
+
+
 \begin{table}[H]	
   \begin{center}
      % \label{tab:Available_exp}
@@ -687,7 +689,7 @@ analysis for Fig~\ref{fig:bottom_to_top_motivating_ex}.
 
 Assume that the expression ``$b=2$" in $n3$ has been deleted. Now, we will calculate the updated information in following two steps:
 \begin{itemize}
-\item{The data flow values which were 0 and $may$ become 1 due to this change are shown in Table~\ref{tab:Available_exp_which_may_1}}
+\item{The data flow values which were 0 and $may$ become 1 due to this change (shown in Table~\ref{tab:Available_exp_which_may_1})}
 
 At node $n3$, the expression ``$b=2$'' is killing the availability of expressions $a*b$ and $a+b$. So after the removal of $b=2$, 
 expression $a*b$ and $a+b$ may available at the OUT of $n3$ which in turn affects many other nodes. So, we will construct an \textbf{affected region}.  
@@ -725,7 +727,7 @@ Table~\ref{tab:Available_exp_which_remain_0}}
 This step is again divided in two following parts:
 
 \begin{itemize}
-\item \textbf{Identifying boundary nodes}: Boundary nodes are those where some information comes from the unaffected part of the program. We need to consider 
+\item \textbf{Identifying boundary nodes}: Boundary nodes are those where some information comes from an unaffected part of the program. We need to consider 
 those information to compute the data flow values. In Fig~\ref{fig:bottom_to_top_motivating_ex}, $n2$ is a boundary node. To calculate \textit{IN}$_2$ we need to consider
 \textit{OUT}$_5 \sqcap$ \textit{OUT}$_1$, where $n1$ is a node in unaffected region. 
 
@@ -789,13 +791,13 @@ Thus, the final solution is shown in Table~\ref{tab:Available_exp_final_solution
 % multiple changes  
 We note that although the example above is for a single change, a similar method can be applied for multiple changes in the control flow graph.
 
-\subsection{Node listing as affected region}
+\subsection{Node Listing as Affected Region}
 A \textit{node listing}~\cite{node_listing} for control flow graph \textit{G=(N,E,n$_0$)}, where \textit{N} is the set of nodes, \textit{E} is the set of edges, and \textit{n$_0$} is the
 program entry nodes, is defined to be a sequence 
 \begin{equation}
  l=(n_1, n_2, ......n_m)
 \end{equation}
-of nodes from \textit{N}(nodes may be repeated) such that every simple path in \textit{G} is a subsequence of \textit{l}. 
+of nodes from \textit{N}(nodes may be repeated) such that every single path in \textit{G} is a subsequence of \textit{l}. 
 
 We can use \textit{node listing} as an affected region without traversing the control flow graph.
 But \textit{node listing} may include some unaffected nodes which leads to redundant computation.   
@@ -853,13 +855,13 @@ The following two kinds of changes may take place:
  \begin{itemize}
   \item Deletion of an edge: \newline
   Deleting an edge $e$ will delete functions $h(u,v)$ and $h'(v,u)$. We know that a non-existant function is a constant function $\top$. Thus, some functions
-  may change to $\top$ which is a Bottom to Top change.
+  may change to $\top$ which is a bottom to top change.
   \item Insertion of an edge:\newline
-  Inserting an edge $e$ will add two new functions $h(u,v)$ and $h'(v,u)$ which is a Top to Bottom change.
+  Inserting an edge $e$ will add two new functions $h(u,v)$ and $h'(v,u)$ which is a top to bottom change.
   \item Deletion of a node: \newline
-  Deletion of a node involves both Top to Bottom and Bottom to Top changes as illustrated in figure \ref{fig:delnodexample}.
-  The deletion of the node $k$ starts with the removal of edges $e1 = (i, k)$ and $e2 = (k, j)$, a Bottom to Top change. 
-  This is followed by addition of the edge $e3 = (i, j)$, a Top to Bottom change.
+  Deletion of a node involves both top to bottom and bottom to top changes as illustrated in figure \ref{fig:delnodexample}.
+  The deletion of the node $k$ starts with the removal of edges $e1 = (i, k)$ and $e2 = (k, j)$, a bottom to top change. 
+  This is followed by addition of the edge $e3 = (i, j)$, a top to bottom change.
 
   \begin{figure}[!htb]
 \centering
@@ -894,7 +896,7 @@ The following two kinds of changes may take place:
   \item Insertion of a node:\\
   The process of insertion of a node is complementary to the deletion process explained above. 
   The insertion process, as illustrated in figure \ref{fig:insnodexample}, starts with 
-  deletion of the edge $e1 = (i, j)$, a Bottom to Top change. This is followed by insertion of edges $e2 = (i, k)$  and $e3 = (k, j)$, a Top to Bottom change.
+  deletion of the edge $e1 = (i, j)$, a bottom to top change. This is followed by insertion of edges $e2 = (i, k)$  and $e3 = (k, j)$, a top to bottom change.
   
   \begin{figure}[!htb]
 \centering
@@ -956,7 +958,7 @@ paths which was traversed during computation of points-to sets to precisely iden
 
 Another approach~\cite{inc2}, generates a structural difference between the old and new code version, called as \textit{diff}. The \textit{diff} 
 provides an information of added and removed nodes/edges from the inter-procedural control-flow graph(ICFG). Added or removed nodes are called as
-\textit{changed} nodes. The set of \textit{affected} nodes will contains all the nodes which are reachable from the \textit{changed} nodes(which is an over approximation). The set of \textit{affected} nodes are inferred from the set of \textit{changed} node. 
+\textit{changed} nodes. The set of \textit{affected} node contains all the nodes which are reachable from the \textit{changed} nodes(which is an over approximation). The set of \textit{affected} nodes are inferred from the set of \textit{changed} node. 
 This is followed by a clear-and-propagate strategy: for each affected node, it clears the  computed information
 and then re-propagates the information from all the node’s predecessors. Basically, it creates an affected region for all kind of changes.
 
@@ -1110,7 +1112,7 @@ control flow edge. An array of \texttt{IRObjects}, representing all functions in
 function call, an API over it can be used to get \texttt{ICFG} of the function that is called.
 
 \subsubsection{Interpreting statements in PRISM IR}
-Each \texttt{ICFGNode} represents a statement in PRISM IR. The \texttt{ICFGNode} is associated with an instance of \texttt{Epxr} which represents the expression of the 
+Each \texttt{ICFGNode} represents a statement in PRISM IR. The \texttt{ICFGNode} is associated with an instance of \texttt{Expr} which represents the expression of the 
 statement. \texttt{Expr} is a base type and can be many of its subtypes. Some possible subtypes are: 
 \begin{itemize}
  \item Unary
@@ -1225,8 +1227,7 @@ It is similar to ``\texttt{import}'' statement in java. There are two following 
 					    \hspace{15mm} \textit{fn\_use identifier;}
 					    
 					    \hspace{15mm} For e.g. \texttt{fn\_use darpan.klgLib;}
-	\item \texttt{java\_use} : It specifies the class file where Java files accessed in this query are present. It is followed by java
-	decl, which specifies the Java functions used from the file specified in \texttt{java\_use}
+	\item \texttt{java\_use} : It specifies the class file where Java files accessed in this query are present. It is followed by \texttt{java$\_$decl}, which specifies the Java functions used from the file specified in \texttt{java\_use}
 	 \newline Syntax : 
 			  
 					    \hspace{15mm} \textit{java\_use identifier;}
@@ -1481,7 +1482,7 @@ Following are generated .java files:
 \subsection{Modules of Bi-directional Solver}
 Following modules are used in the bi-directional Solver.
 \begin{itemize}
- \item \textbf{DFStore:} It stores context sensitive data flow information. It also provides an API to access the data. More details are given in Appendix.
+ \item \textbf{DFStore:} It stores context sensitive data flow information. It also provides an API to access the data.
  \item \textbf{ValueContexts:} It stores information about contexts formed during analysis.
  \item \textbf{ContextTransition:} It stores context transition graph which is a method of representing call strings.
  \item \textbf{DFSolverLogger:} This module provides utilities for logging, measuring performance parameters of the core solver.
@@ -1521,7 +1522,7 @@ the lattice of the data flow problem
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Liveness Based Reaching Definition Analysis using PRISM}
 
-In order to understand PRISM, we have implemented a query for Inter-procedural Liveness-based reaching definition analysis using PRISM. Other queries which are 
+In order to understand PRISM, we have implemented a query for Liveness-based reaching definition analysis using PRISM. Other queries which are 
 implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
 Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
 liveness.
@@ -1580,7 +1581,7 @@ node.
 22.		(S-kill)+def;
 \end{lstlisting}
 
-For other types of statements, it will just propagates the values reaching at the In of that node to its OUT. Following in the code.
+For other types of statements, it will just propagates the values reaching at the IN of that node to its OUT. Following in the code.
 
 \begin{lstlisting}[]
 23. ForwardNodeflow( n: _, S: L ) 
@@ -1980,7 +1981,7 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \
 % \end{itemize}
 
-\section{Steps to Run Incremental Driver}
+% \section{Steps to Run Incremental Driver}
 
 
 \section{Incremental Reaching Definition Analysis}
@@ -1989,7 +1990,7 @@ Using Incremental Solver we have performed reaching definition analysis. It cons
 \begin{itemize}
 \item Specification for reaching definition analysis
   \begin{itemize}
-  \item \textbf{Node flow functions and Meet functions} Node flow functions and consists of flow functions for 
+  \item \textbf{Node flow functions} Node flow functions consists of flow functions for 
  each statement.  It is specified in the Kulang specification. 
   \item \textbf{Meet function} This function merges information coming from two different nodes. It is specified in the Kulang specification.
   \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
@@ -2062,7 +2063,7 @@ Some of the test cases that we used to check the Incremental Solver are as follo
  \item \textbf{Changed statement contains a definition of global variable} Consider the control flow graph in figure~\ref{fig:testCase1}. Let $a$ be a global variable
  and $n7$ be the changed node. The Affected region created by the solver is \textbf{AR} = $< n7, n9, n11, n15, n16 >$ and $n7$ is the boundary node.
  The nodes traversed by the solver are $<  n7, n9, n11, n15, n16 >$.
- \item \textbf{Changed statement contains a definition of local variable} Let $a$ is a local variable and $n7$ be the changed node in figure~\ref{fig:testCase1}.
+ \item \textbf{Changed statement contains a definition of local variable} Let $a$ be a local variable and $n7$ be the changed node in figure~\ref{fig:testCase1}.
  The affected region created by the solver is \textbf{AR} = $< n7, n9, n11, n12 >$ and boundary nodes are $n7$ and $n12$.
  The nodes traversed by the solver are $<  n7, n9, n11, n12 >$.
  \item Let the changed node be $n8$. Variable $z$ is passed as a parameter in function \textit{func1(z)} at $n10$. The affected region created by the solver is 
@@ -2374,7 +2375,7 @@ In this case, if expression $b=a$ is removed from the node then $b$ will become 
 \begin{figure}[t]
 \centering
 \psset{unit=1mm}
-\begin{pspicture}(0,10)(150,90)
+\begin{pspicture}(0,10)(150,85)
 %%\psframe(0,0)(100,90)
 \putnode{n1}{origin}{27}{80}{%
      \psframebox[linewidth=.3,framesep=1.7]{ $a=1$}}
