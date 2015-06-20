@@ -438,6 +438,8 @@ analysis basically focuses on global changes.
 
 
 \section{Incremental Analysis for Bit-vector Frameworks}
+In this section, first we describe the flow functions associated with bit-vector frameworks. Then we briefly describes the possible changes in bit-vector 
+frameworks and how to handle those changes. 
 \subsection{Flow Functions in Bit-vector Frameworks}
 In bit-vector analysis, following types of functions are possible. 
 \begin{itemize}
@@ -498,6 +500,7 @@ In bit-vector analysis, following types of functions are possible.
 
 
 \label{sec:bit-vector}
+\subsection{Possible Changes in Flow Functions}
 For a given entity, the following changes could happen as a consequence of some change in a node:
 \begin{itemize}
 \item some data flow values may change from top ($\top$) to bottom ($\bot$). Possible changes in the flow function is shown in fig~\ref{fig:flow_func_top_to_bot}(a) 
@@ -561,7 +564,7 @@ in flow functions for bottom to top change.}
 
 
 
-\subsection{Handling Top to Bottom change}
+\subsubsection{Handling Top to Bottom change}
 Given that $\forall x \in L : x \sqcap \top = x$, a top value for a data flow property is an intermediate value until the analysis is
 completed. But in case of a bottom value, $\forall x \in L : x \sqcap \bot =\bot $. Thus, a bottom value is a final value even during analysis. So whenever 
 there is a top to bottom change in a program, the changes can be propagated directly to its neighbouring nodes.
@@ -597,7 +600,7 @@ can be incorporated by directly propagating the change to its neighbour.
    \label{fig:top_to_bot_bitvector}
 \end{figure}
 
-\subsection{Handling Bottom to Top change}
+\subsubsection{Handling Bottom to Top change}
 Bottom value is a final value even during the analysis. Thus, whenever there is a bottom to top change we cannot directly propagate the changes to its neighbours. 
 We need some more processing to incorporate this change.
 
@@ -1976,7 +1979,8 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \item oldIRnode: It stores old IR node information
 %  \
 % \end{itemize}
-% \section{Steps to Run Incremental Driver}
+
+\section{Steps to Run Incremental Driver}
 
 
 \section{Incremental Reaching Definition Analysis}
@@ -3660,7 +3664,7 @@ The following are the steps :
  files will be created and, the generated analyzer would be created and compiled in the same directory.
 \end{itemize}
 
-\section{Running an analysis in PRISM}
+\section{Running an Analysis in PRISM}
 Following are the steps to run an analysis in PRISM.
 \begin{itemize}
  \item Write a program to be analyzed.
@@ -3675,7 +3679,7 @@ Following are the steps to run an analysis in PRISM.
  \item Run the script `runPrism.sh' script. The results will be dumped into the director \$\textbf{REPOSDIR} as specified in `.ini' file
  \end{itemize}
 
-\section{Steps for setting up PRISM in eclipse}
+\section{Steps for Setting up PRISM in Eclipse}
 \begin{itemize}
  \item Open eclipse, create a new project and import the Driver and Client files of the analysis in the project.
  \item Go to project properties–build path–add external jar. Add all the jar files present in \textbf{\$PRISMROOT/lib}.
@@ -3688,7 +3692,17 @@ previous section.
 \item The results will be dumped into the director \$\textbf{REPOSDIR} as specified in `.ini' file
 \end{itemize}
 
+\section{Steps for Running Incremental Driver} 
+Following are the steps to run a Incremental driver:
+\begin{itemize}
+ \item Compile two programs (old and new programs).
+ \item Go to eclipse > Run Congigurations > Java Application > Arguments and add paths of both old and new IR as an argument. First argument should contain the path of old IR  
+ which is followed by the path of new IR.
+ \item Upon execution, command line will prompt asking for an user input.
+ \item 
  
+\end{itemize}
+
  
  
  
@@ -3697,7 +3711,7 @@ previous section.
 
 This section describes the APIs that we have used in our implementation. An exhaustive list appears in PRISM documentation.
 
-\section{API to access IR}
+\section{API to Access IR}
 \texttt{Expr} is the base class that represents the expression in IR. This class has sub classes to represent the type of expressions, such as Unary, Binary etc.
 Following are some of the API to excess the expression in IR :
 \begin{itemize}
@@ -3758,7 +3772,6 @@ set NamedEntity getNEsFromCall(Expr),
 set NamedEntity getNEsFromReturn(ASTnode),
 boolean isLive(Expr,set NamedEntity),
 set NamedEntity aliasClosure ( Expr, IRObject),
-boolean printSet(set NamedEntity),
 boolean isDref(Expr),
 boolean isMust(set NamedEntity),
 set NamedEntity getPtsto(res,Expr),
@@ -3833,7 +3846,7 @@ ForwardEdgeflow(E: _, S: L)
 \end{lstlisting}
 
 
-\section{Liveness-based Reaching definition analysis}
+\section{Liveness-based Intra-procedural Reaching Definition Analysis}
 Following is the specification for Liveness-based Intra-procedural Reaching definition analysis.
 \begin{lstlisting}
 //Package declaration
@@ -3867,8 +3880,6 @@ boolean isLive(Expr,set NamedEntity),
 boolean Check_datatype_call(Expr),
 set NamedEntity aliasClosure ( Expr, IRObject),
 livenesslattice useInRhs(res,Expr),
-boolean printSet(set NamedEntity),
-boolean CHECK(Expr),
 boolean check_datatype(Expr),
 boolean check_datatype_lhs(Expr),
 boolean isDref(Expr),
@@ -4055,7 +4066,389 @@ in
 
 \end{lstlisting}
 
+\section{Liveness-based Inter-procedural Reaching definition analysis}
+Following is the specification for Liveness-based Inter-procedural Reaching definition analysis.
 
+\begin{lstlisting}
+package darpan.klgLib;
+
+res :: set NamedEntity,
+tup :: tuple(int,NamedEntity,NamedEntity),
+tup1 :: tuple(NamedEntity,NamedEntity),
+pntr_info :: set tup1,
+pointstolattice :: set tup;
+
+
+fn_use darpan.klgLib;
+fn_decl
+pointstolattice Meet (pointstolattice, pointstolattice),
+pointstolattice cartProduct ( set NamedEntity, set NamedEntity);
+
+java_use darpan.klgLib.Aux;
+java_decl
+set NamedEntity getNEs(Expr),
+set NamedEntity getNEsFromCall(pntr_info,Expr),
+set NamedEntity getNEsFromCall(Expr),
+set NamedEntity getNEsFromReturn(ASTnode),
+boolean isLive(Expr,set NamedEntity),
+set NamedEntity aliasClosure ( Expr, IRObject),
+boolean isDref(Expr),
+pointstolattice HasElement(NamedEntity,pointstolattice),
+set NamedEntity removeIndirection@darpan.klgLib.AnalysisAPI(Expr, pointstolattice) ,
+boolean isMust(set NamedEntity),
+set NamedEntity getPtsto(pntr_info,Expr),
+pntr_info getPointesOf(pntr_info,set NamedEntity),
+set NamedEntity dref(pointstolattice,Expr),
+set NamedEntity getLhsSet(pntr_info,Expr),
+set NamedEntity getKillCandidate(pntr_info,res,Expr),
+NamedEntity getIllegalNE(),
+pntr_info removeNonLive(set NamedEntity, pntr_info),
+set tup cst(set tup),
+set NamedEntity emptySet(),
+set NamedEntity useInLhsDref(pntr_info,Expr),
+set NamedEntity useInRhs(pntr_info,Expr,boolean),
+pointstolattice	getSurvive(pntr_info,pointstolattice),
+boolean check_datatype_lhs(Expr),
+boolean check_datatype_lne(NamedEntity),
+boolean check_datatype(Expr),
+boolean check_datatype_new(NamedEntity),
+NamedEntity getN(Expr),
+int Line(Expr),
+int Line(ASTnode),
+NamedEntity getRvalue(Expr),
+NamedEntity pointsToInfo(NamedEntity,pntr_info),
+boolean isEqualNe(NamedEntity, NamedEntity),
+boolean isStrongUpdate(Expr);
+
+[FLA];
+
+Forwardlattice L1 ::  pointstolattice; 
+Backwardlattice L2 ::  res;
+
+sLiveness_FG implements sLiveness_FG:
+
+ForwardTop : (pointstolattice){};
+BackwardTop : (res){};
+
+A ForwardMeet B : A+B;
+A BackwardMeet B : A+B;
+
+ForwardBoundaryValue: (pointstolattice){};
+BackwardBoundaryValue : (res){};
+
+BackwardNodeflow( n: Unary, S: L1, S1: L2 ) 
+	let
+		pntr=<<a :(pntr_info) {} ; x <- S;
+			     a + {[atIndex(x,1), atIndex(x,2)]}>>; //extracting 
+								    pointer information
+		
+		useinrhs = if(check_datatype(n) == false) // if operand 
+							     is a pointer
+			   then
+				useInRhs(pntr,n,true) // get the pointees
+			   else
+$$				getNEs(n)
+			   endif;
+		
+	in
+		useinrhs + S1;
+
+BackwardNodeflow( n: Binary, S: L1, S1: L2 )
+let
+        opr = operator(n);
+        d = emptySet();
+        lt_expr = lhs(n);
+        rt_expr = rhs(n);
+	lNE = getNEs(lt_expr);
+	rNE = getNEs(rt_expr);
+        ss = d + S1;
+	pntr=<<a :(pntr_info) {} ; x <- S;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	chck_livness = isLive(lt_expr,S1); // checking the liveness
+					      of lhs operands
+        useinlhs = if(!check_datatype_lhs(lt_expr))
+		   then	
+			if ( ( opr == '=' ))
+			then
+				useInLhsDref(pntr,lt_expr)
+			else
+				useInRhs(pntr,n,chck_livness)
+			endif
+		   else
+			if ( ( opr == '=' ))
+                        then
+				(set NamedEntity){}
+                        else
+				lNE
+                        endif
+		   endif;
+        useinrhs = if(!check_datatype(rt_expr))
+		   then
+			useInRhs(pntr,rt_expr,chck_livness)
+		   else
+			if(operator(n) == '=')
+                        then
+				if(isLive(lt_expr,S1) == true)
+				then
+                               		rNE
+				else
+					(set NamedEntity){}
+				endif
+			else
+				rNE
+                    	endif
+		   endif;
+
+        killcandidate = if(!check_datatype_lhs(lt_expr))
+		       then
+				if ( ( opr == '=' ))
+				then
+					getKillCandidate(pntr,S1,lt_expr)
+				else
+					(set NamedEntity){}
+				endif
+			else
+				if(operator(n) == '=')
+				then
+					lNE
+				else
+					(set NamedEntity){}
+				endif
+			endif;
+	gen = useinlhs + useinrhs + ss;
+	sur = gen - killcandidate;
+in
+	sur;
+
+BackwardNodeflow( n: Returnstmt, S: L1, S1: L2 ) 
+let
+	re = retExpr(n);
+	pntr = <<a :(pntr_info) {} ; x <- S;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	s = useInRhs(pntr,re,true);
+in
+	S1 + s;
+
+BackwardNodeflow( n: Call, S: L1, S1: L2 ) 
+let
+	d = emptySet();
+	pntr = <<a :(pntr_info) {} ; x <- S;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	nes = if(check_datatype(n) == false)
+              then
+		getNEsFromCall(pntr,n)
+	      else
+		getNEsFromCall(n)
+	      endif;
+in
+	d + nes + S1;
+
+
+BackwardNodeflow( n: _, S: L1 ,S1: L2) 
+	S1;
+
+BackwardEdgeflow(E: _, S: L1 ,S1: L2) 
+	S1;
+
+ForwardNodeflow( n: Unary, S: L1, S1: L2 )
+let
+	line = Line(n);
+	pntr = <<a :(pntr_info) {} ; x <- S;
+                       a + {[atIndex(x,1), atIndex(x,2)]}>>;
+
+	useinrhs = if(check_datatype(n) == false)
+                   then
+                         useInRhs(pntr,n,true)
+                   else
+                         getNEs(n)
+                   endif;
+	def = <<a :(pointstolattice) {} ; x <- useinrhs;
+		a+
+		    if(!isIllegalNE(x))
+		    then
+			 {[line,x,pointsToInfo(x,pntr)]}
+		    else
+			 {}
+		    endif
+			>>;
+	ne = NE(n);
+	kill = HasElement(ne,S);
+in 
+	(S - kill) + def;
+
+ForwardNodeflow( n: Function_AST, S: L1, S1: L2 )
+let
+	para = parameterAST(n);
+	line = Line(n);
+	total_def = << a: (pointstolattice) {} ; x <- para;
+                    a+
+                        if(!isIllegalNE(x))
+                        then
+                            {[line,x,getIllegalNE()]}
+                        else
+                            {}
+                        endif >>;
+	def = <<a :(pntr_info) {} ; x <- total_def;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	kill = << a : (pointstolattice)  {} ; x <- S;
+		 a+ 
+			<< b : (pointstolattice) {} ; y <- total_def;
+				if(isEqualNe(atIndex(x,1),atIndex(y,1)))
+				then
+					{x}
+				else
+					{}
+				endif
+			>>
+		
+  		>>;
+	surv = removeNonLive(S1,def);
+	survive = getSurvive(surv,total_def);
+in
+	survive; 
+
+ForwardNodeflow( n: Symbol_AST, S: L1, S1: L2 )
+let
+	exp = initExpr(n);
+	ne = NE(n);
+	line = Line(exp);
+	kill = HasElement(ne,S);
+	def = if(!check_datatype_new(ne))
+	     then
+		{[line,ne,getRvalue(exp)]}
+	     else
+		{[line,ne,getIllegalNE()]}
+	     endif;
+	su = (S - kill) + def;
+	pntr = <<a :(pntr_info) {} ; x <- su;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	surv = removeNonLive(S1,pntr);
+	survive = getSurvive(surv,su);
+in
+	survive;
+
+ForwardNodeflow( n: Binary, S: L1, S1: L2 ) 
+let
+	lt_expr = lhs(n);
+	rt_expr = rhs(n);
+	line = Line(lt_expr); 
+	ne = NE(n);
+	pntr_info1 = <<a :(pntr_info) {} ; x <- S;
+	             a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	rne = if(!check_datatype_lhs(rhs(n)))
+	      then
+		getPtsto(pntr_info1,rt_expr)
+	      else
+		getNEs(rt_expr)
+	      endif;
+	lne = if(!check_datatype_lhs(lhs(n)))
+ 	     then
+		 getLhsSet(pntr_info1,lt_expr)
+	     else
+		getNEs(lt_expr)
+	     endif;
+	rne_new = if(rne == emptySet())
+		then
+			{getIllegalNE()}
+		else
+			rne
+		endif;
+	gn = if(operator(n) == '=')
+	    then
+		<< a: (pointstolattice) {} ; x <- lne;
+                    a+
+		    	if(check_datatype_lne(x))
+	    		then
+                       		<< b: (pointstolattice) {} ; t <- rne_new;
+                               	   b+
+                                     	if(!isIllegalNE(x))
+					then
+						{[line,x,t]}
+					else
+						{}
+                                        endif
+                           	>>
+		         else
+				{[line,x,getIllegalNE()]}
+		   	endif
+                >>
+	    else
+		(pointstolattice) {}
+	    endif;
+	kl = if(!check_datatype_lhs(lhs(n)))
+	     then
+		if((isMust(lne)))
+		then
+			if(isStrongUpdate(lt_expr))
+			then
+				getPointesOf(pntr_info1,lne)
+			else
+				(pntr_info){}
+			endif		
+			
+		else
+			(pntr_info){}
+		endif
+	      else
+			(pntr_info){}
+	      endif;
+	kill = if(!check_datatype_lhs(lhs(n)))
+	     then
+		 << a: (pointstolattice) {} ; x <- kl;
+                    a+
+                           << b: (pointstolattice) {} ; t <- S;
+                                   b+
+                                        if(atIndex(x,0)==atIndex(t,1))
+                                        then
+                                                {t}
+                                        else
+                                               (pointstolattice){}
+                                        endif
+                           >>
+                >>
+	    else
+		HasElement(ne,S)
+	    endif;
+	su = (S - kill) + gn;
+	temp = emptySet();
+	liveset = temp + S1;
+	pntr = <<a :(pntr_info) {} ; x <- su;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+
+	surv1 = removeNonLive(liveset,pntr);
+	surv = removeNonLive(liveset,surv1);
+	survive=getSurvive(surv,su);
+
+in
+	survive;
+
+ForwardNodeflow( n: _, S: L1 ,S1: L2) 
+let
+	temp = emptySet();
+	liveset = temp + S1;
+	pntr = <<a :(pntr_info) {} ; x <- S;
+                     a + {[atIndex(x,1), atIndex(x,2)]}>>;
+	surv = removeNonLive(liveset,pntr);
+	survive = << a: (pointstolattice) {} ; x <- surv;
+                    a+
+                           << b: (pointstolattice) {} ; t <- S;
+                                   b+
+                                        if(atIndex(x,0)==atIndex(t,1))
+                                        then
+                                                {t}
+                                        else
+                                               (pointstolattice){}
+                                        endif
+                           >>
+                >>;
+
+in
+	survive;
+
+ForwardEdgeflow(E: _, S: L1 ,S1: L2) 
+	S;
+
+\end{lstlisting}
 
 
 
