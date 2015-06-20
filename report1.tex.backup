@@ -43,9 +43,9 @@ data flow can lead to significant savings.
 
 We first describe PRISM, an analyzer generator developed at Tata Research Development and Design Centre (TRDDC).
 We next present the enhancements done to the PRISM solver to add the capabilities of incremental analysis, elaborating on the challenges faced and the changes made. 
-Such incremental analysis methods are well studied for bit-vector framework. 
-However, these methods are not directly applicable to General framework. 
-This report also presents some challenges involved and possible solutions for doing incremental analysis for General framework.
+Such incremental analysis methods are well studied for bit-vector frameworks. 
+However, these methods are not directly applicable to general frameworks. 
+This report also presents some challenges involved and possible solutions for doing incremental analysis for general frameworks.
 
 \end{abstract}
 %\end{comment}
@@ -391,17 +391,17 @@ This project aims at providing support for incremental data flow analysis in PRI
 Old version of PRISM~\cite{thesis_v} performs both unidirectional and bi-directional context sensitive analysis. 
 However, it doesn't perform incremental data flow analysis.
 
-This report explains the implemented incremental solver. It also presents some issues in implementing incremental data flow analysis for non-bit vector
-framework. It describes the implemented Liveness-based Inter-procedural Reaching Definition Analysis in PRISM.
+This report explains the implemented incremental solver. It also presents some issues in implementing incremental data flow analysis for general
+frameworks. It describes the implemented Liveness-based Inter-procedural Reaching Definition Analysis in PRISM.
 
 
 
 
 \section{Organization of the report}
-The report is organized as follows. Chapter 2 describes incremental analysis for bit-vector framework.
+The report is organized as follows. Chapter 2 describes incremental analysis for bit-vector frameworks.
 Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Reaching Definition analysis in 
 PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5.
-Chapter 6 describes some of issues in doing incremental analysis for General framework. Chapter 7 describes some extensions
+Chapter 6 describes some of issues in doing incremental analysis for general frameworks. Chapter 7 describes some extensions
 that can be made to the current work. 
 
 
@@ -437,15 +437,15 @@ other node. Global changes can be found by incorporating the effect of local cha
 analysis basically focuses on global changes.
 
 
-\section{Incremental analysis in Bit-vector framework}
-\subsection{Flow functions in bit-bector framework}
-In bit-vector analyis, following types of functions are possible. 
+\section{Incremental Analysis for Bit-vector Frameworks}
+\subsection{Flow Functions in Bit-vector Frameworks}
+In bit-vector analysis, following types of functions are possible. 
 \begin{itemize}
  \item Raise : Result is always top ($\top$). Consider an available expression analysis in figure~\ref{fig:flow_func}(a). At node n2, \textit{GEN}
  is 1 and \textit{KILL} is 0. Therefore, \textit{OUT}$_2 = 1$ or $\top$ ( \textit{OUT}$_n =$ \textit{GEN} $\cup$ (\textit{IN}$_n$ - \textit{KILL}) ). 
  Flow function at n2 is a Raise function whose result is always $\top$
  
- \item Lower : Result is always bot ($\bot$). Consider an available expression analysis in figure~\ref{fig:flow_func}(b). At node n2, \textit{GEN}
+ \item Lower : Result is always bottom ($\bot$). Consider an available expression analysis in figure~\ref{fig:flow_func}(b). At node n2, \textit{GEN}
  is 0 and \textit{KILL} is 1. Therefore, \textit{OUT}$_2 = 0$ or $\bot$. Flow function at n2 is a Lower function whose result is always $\bot$
  
  \item Propagate : It propagates the value at IN to OUT of the node. Consider an available expression analysis in 
@@ -489,7 +489,7 @@ In bit-vector analyis, following types of functions are possible.
 \ncline{->}{n13}{n23}
 \ncline{->}{n23}{n33}
 \end{pspicture}
-\caption[Three possible flow functions]{Flow functions in Bit-vector framework}
+\caption[Three possible flow functions]{Flow functions in bit-vector frameworks}
    \label{fig:flow_func}
 \end{figure}
 
@@ -962,7 +962,7 @@ When a program undergoes changes, data flow values computed earlier become inval
 of changes by repeating an exhaustive analysis can be cost inefficient since it may compute redundant values. In such cases, incremental data flow
 analysis, which modifies only the data flow information of the program that has been affected by the change is more cost effective.
 
-In Bit-vector framework, due to program change the data flow value may change either from top to bottom or vice versa. Top to bottom change can
+In bit-vector frameworks, due to program change the data flow value may change either from top to bottom or vice versa. Top to bottom change can
 be incorporated by directly propagating the values to the neighbors of the changed node. For bottom to top change, we need to create an affected 
 region to incorporate the change to the neighbors of the changed node.
 
@@ -1413,7 +1413,7 @@ accessed by user to get data flow values at some program point. It can also be u
 data flow problem. 
 
 Figure~\ref{fig:generated_analyser} shows an architecture of generated analyzer. The solver takes data flow analysis API class, functions generated by kulang compiler and some utility functions provided
-by PRISM framework as input and generates a result.
+by PRISM as input and generates a result.
 \begin{figure}[H]
 \centering
 \psset{unit=1mm}
@@ -1845,16 +1845,18 @@ The performance measurement of reaching definition with liveness is shown in tab
 
 
 Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
-\begin{figure}[p]	
+\begin{figure}[H]	
 \centering
 \includegraphics[width=0.8\textwidth]{graph.eps}
 \caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
 \label{fig:bench_mark}
 \end{figure}
 
+
 \section{Summary}
-We have implemented a query for reaching definition analysis with and without liveness using PRISM. Other queries which are 
-implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing
+We have implemented a query for reaching definition analysis with and without liveness using PRISM.
+The reaching definition analysis described in this chapter is implemented at intra-procedural level, improved implementation in given in Appendix~\ref{ap:C}.
+Other queries which are implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing
 and Strong liveness analysis with aliasing. 
 
 In order to compare the performance between reaching definition analysis with and without liveness, we tested both for SPEC Benchmarks.
@@ -1974,7 +1976,8 @@ The core PRISM solver was extended to support Incremental data flow analysis. Fo
 %  \item oldIRnode: It stores old IR node information
 %  \
 % \end{itemize}
-\section{Steps to Run Incremental Driver}
+% \section{Steps to Run Incremental Driver}
+
 
 \section{Incremental Reaching Definition Analysis}
 Using Incremental Solver we have performed reaching definition analysis. It consists of two following parts:
@@ -2005,12 +2008,12 @@ Using Incremental Solver we have performed reaching definition analysis. It cons
 %  This thus involves some inherent loss of information.
 % \end{itemize}
 
-\section{Assumptions and Limitation }
+\section{Assumptions and Limitations }
 
 The assumptions that we make are listed with the corresponding justifications as follows:
 \begin{itemize}
 \item \textbf{Pointer information will remain same.}
-At present we have not implemented incremental analysis for general framework. So, it is not possible to incrementally update the pointer information.
+At present we have not implemented incremental analysis for general frameworks. So, it is not possible to incrementally update the pointer information.
 % During runtime, a pointer may point to the heap and thus incrementally updating the pointer information would be complicated, which
 % gives room to this simplifying assumption.
 \item \textbf{There is no change in the context information.}
@@ -2032,8 +2035,8 @@ The results from the old solver are stored in a text file, and not serialized in
 This renders it impossible to deserialize the results from the old solver and to serialize our results back.
 Late discovery of this issue has prevented any corrective measures. Therefore, we take the following two assumptions. 
 \begin{itemize}
-\item \textbf{A name can refer to a single variable in a program at any given program point.}
-\item \textbf{The past information is stored flow sensitively.}
+\item A name can refer to a single variable in a program at any given program point.
+\item The past information is stored flow sensitively.
 \end{itemize}
 
 
@@ -2234,15 +2237,15 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Issues in Incremental Analysis for General framework}
-The incremental analysis discussed in chapter 2 is restricted to Bit-Vector framework only.
-Bit-Vector frameworks cover a relatively simpler case where the data flow information of 
+\chapter{Issues in Incremental Analysis for General Frameworks}
+The incremental analysis discussed in chapter 2 is restricted to bit-vector frameworks only.
+Bit-vector frameworks cover a relatively simpler case where the data flow information of 
 different entities is independent of each other. In situations where the data flow information
 of entities is interdependent, a more general kind of flow functions are needed.
 The corresponding general frameworks are called \emph{non-separable}.
 
-In this chapter, we will discuss some of the issues in extending the existing Incremental 
-Analysis to a general framework by means of constant propagation analysis.
+In this chapter, we will discuss some of the issues in extending the existing incremental 
+analysis to a general frameworks by means of constant propagation analysis.
 
 
 \section{Issues in Incremental Analysis for Constant Propagation}
@@ -2301,8 +2304,8 @@ to indicate that $x$ can have different values at $u$ along different paths reac
 \subsection{Flow Functions}
 Following are the possible flow functions in Constant Propagation analysis:
 \begin{itemize}
-\item Top : It is similar to the raise function in bit-vector framework. It always results in Top value.
-\item Bottom : It is similar to the lower function in bit-vector framework. It always results in Bottom value.
+\item Top : It is similar to the raise function in bit-vector frameworks. It always results in Top value.
+\item Bottom : It is similar to the lower function in bit-vector frameworks. It always results in Bottom value.
  \item Constant : Function whose result is always constant. Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(a),
  the flow function at node n2 will always produce a constant value 1 at the OUT of n2. There is one function per value.
   \item Side level : Consider a constant propagation analysis in fig~\ref{fig:flow_func_constant}(b), the value 
@@ -2554,7 +2557,7 @@ the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)), 
 
 		
 \end{pspicture}
-\caption[Change from intermediate level to bottom in Non-bit vector framework]{Change from intermediate level to bottom}
+\caption[Change from intermediate level to bottom in general framework]{Change from intermediate level to bottom}
    \label{fig:inter_otherlevels_lower}
 \end{figure}
 
@@ -2662,14 +2665,14 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
 
 \subsection{Need for Affected Region for Every Change }
 
-Unlike bit-vector framework when there is a change to bottom, we cannot directly propagate
+Unlike bit-vector frameworks when there is a change to bottom, we cannot directly propagate
 the change to its neighboring nodes since it may depend on the OUT information of the node.
 We illustrate this via an example in figure \ref{fig:incr_non-bit1}. If expression $b=2$ is removed,
 then according to existing incremental analysis, this is a change to bottom and we can directly propagate
 the change to its neighboring nodes. However, this is incorrect. 
 The information at the IN of node 4 is bottom because of the expression $b=2$ in node 4.
 If we will propagate $\bot$ to neighboring nodes, it will give incorrect results.
-Unlike bit-vector framework, we may need to create an affected region even if there is a change to bottom.
+Unlike bit-vector frameworks, we may need to create an affected region even if there is a change to bottom.
 Thus, the solution is to create an affected region for all kind of changes.
 \begin{figure}[H]
 \centering
@@ -2914,8 +2917,8 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
-In general framework, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. This optimization is applicable
-for Bit-vector vector framework also. 
+In general frameworks, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. This optimization is applicable
+for bit-vector vector frameworks also. 
 
 This optimization can work only on single change in a program. Handling for multiple changes need to be studied. 
 
@@ -3228,7 +3231,7 @@ the OUT of node $n4$ (as shown in figure~\ref{fig:inter_otherlevels_lower}(b)), 
 
 		
 \end{pspicture}
-\caption[Change from intermediate level to bottom in Non-bit vector framework]{Change from intermediate level to bottom}
+\caption[Change from intermediate level to bottom in Non-bit vector frameworks]{Change from intermediate level to bottom}
    \label{fig:inter_otherlevels_lower}
 \end{figure}
 
@@ -3336,7 +3339,7 @@ figure~\ref{fig:inter_otherlevels}(b). Due to this change $b$ becomes $2$ at the
 
 
 \section{Issues in Incremental Analysis for Constant Propagation}
-Consider the example in figure~\ref{fig:incr_non-bit1}. Unlike bit-vector framework, the information at IN of the node $n4$ is dependent on the information
+Consider the example in figure~\ref{fig:incr_non-bit1}. Unlike bit-vector frameworks, the information at IN of the node $n4$ is dependent on the information
 at its OUT. Now suppose that this expression is removed due to some change in the program. To incorporate this change, if we propagate the IN
 information to its neighbour then this will give incorrect result. In such cases, when the IN information of a node is dependent on 
 the information at its OUT, affected region needs to be created. We next elaborate on detection of such cases.
@@ -3419,15 +3422,15 @@ Given a changed node $N$, the detection process proceeds as follows
   
 \end{comment}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Conclusion and Future Work}
+\chapter{Conclusions and Future Work}
 %  
-% This report describes the method of doing incremental analysis in bit-vector framework. This method performs incremental analysis for a single change in a program
+% This report describes the method of doing incremental analysis in bit-vector frameworks. This method performs incremental analysis for a single change in a program
 % but in general multiple changes are also possible, so we need a method which can also perform incremental analsis for multiple changes.
 % It also describes some issues in doing incremental analysis in Constant propagation. In Consant propagation we need to create affected region for almost all the cases.
 % We may restrict the size of the affected region even if we cannot avoid it. We need some method so that we can restrict the size of the affected region which will be one 
 % of our future work.
 % 
-% Current PRISM framework supports context sensitive bi-directional analysis. Incremental analysis is not yet implemented in current framework. As a part
+% Current PRISM frameworks supports context sensitive bi-directional analysis. Incremental analysis is not yet implemented in current frameworks. As a part
 % of first stage of the project, queries for both reaching definition analysis with and without liveness have been implemented.
 % 
 % The current specification does not allow the user to specify data flow variables and equations as seen in literature. It places contraints on the type of analysis 
@@ -3436,8 +3439,7 @@ Given a changed node $N$, the detection process proceeds as follows
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Incremental analysis is a method of avoiding redundant analysis in the case when only a part of the program has changed.
 In this report, we discussed the theory and implementation of incremental analysis for bit-vector frameworks, and 
-proposed methods of extending it to general frameworks. The experiments on our test set have yielded motivating results, 
-with savings of up to X\% in terms of data flow information computed.
+proposed methods of extending it to general frameworks. The experiments on our test set have yielded motivating results.
 We also sketch a number of possible improvements in the implementation that may add to the performance and scalability of
 the incremental solver.
 
@@ -3459,11 +3461,18 @@ Resolving these issues will help us in exposing our solver to some new challenge
 
 
 We have proposed a new idea for the optimization of affected region (AR). The idea is framework agnostic
-(can be fitted to both bit vector and general framework), and may lead to significant time savings when
+(can be fitted to both bit vector and general frameworks), and may lead to significant time savings when
 incorporated in the solver.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\bibname}{References}
+\begin{small}
+\bibliography{report1}
+\bibliographystyle{plain}
+\end{small}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \appendix
 \chapter{Bi-directional Solver}\label{ap:BidirectionalSolver}
 In this section, we describe the implementation of core Bi-directional \emph{PRISM} solver. The core bi-directional solver 
@@ -4047,11 +4056,6 @@ in
 \end{lstlisting}
 
 
-\renewcommand{\bibname}{References}
-\begin{small}
-\bibliography{report1}
-\bibliographystyle{plain}
-\end{small}
 
 
 
