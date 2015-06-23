@@ -16,7 +16,13 @@
 \usepackage{courier}
 \usepackage{algorithm,algpseudocode}
 \usepackage{enumitem}
+% \usepackage{tikze}
+\usepackage[notlot,nottoc,notlof]{tocbibind}
 \lstset{basicstyle=\footnotesize\ttfamily}
+\newcommand{\ngtr}{%
+ \mathrel{\ooalign{$>$\cr\hidewidth$|$\hidewidth}}%
+}
+
 
 \pgfplotsset{width=10cm,compat=1.5}
 \restylefloat{table}
@@ -34,6 +40,21 @@
 
 \maketitle
 %\begin{comment}
+
+\chapter*{Acknowledgement}
+I would like to express my gratitude to my guide Prof. Uday Khedker, for
+his constant motivation, supervision and guidance, during the course of the
+project. His suggestions always helped me go forward in the right direction
+when the work was stuck.
+
+The project was collaborative project with TATA Research Development and Design Center (TRDDC). I
+am greatful to Ravindra Naik and Pawan kumar from TRDDC for their suggestions and support.Thanks to Prof. Uday Khedkar and Aman Madaan 
+for motivating me to write a good report.
+
+This work would not have been complete without the constant motivation of my parents and my dear friends Aman Madaan, Someshwar Dhayalan,
+Samson Khess, Abhishek Awasthi, Lucky Agarwal and Praveen Omar. Also I would like to thank my lab mates at the GCC Resource center (GRC) at IIT Bombay.
+% \end{Acknowledgement}
+
 \begin{abstract}
 
 When a program undergoes changes during development, updating the
@@ -48,8 +69,10 @@ However, these methods are not directly applicable to general frameworks.
 This report also presents some challenges involved and possible solutions for doing incremental analysis for general frameworks.
 
 \end{abstract}
+\newcommand*{\noaddvspace}{\renewcommand*{\addvspace}[1]{}}
+\addtocontents{lof}{\protect\noaddvspace}
 %\end{comment}
-
+\addtocontents{lof}{\vskip -1.2cm}
 \tableofcontents
 
 \listoftables
@@ -63,7 +86,7 @@ This report also presents some challenges involved and possible solutions for do
 \chapter{Overview}
 \section{Introduction}
 When a program undergoes changes during development, some or all of data flow information computed earlier becomes invalid.
-Thus, recomputation of data flow values is required.
+Thus, re-computation of data flow values is required.
 \subsubsection{Motivating Example}
 
 Consider a control flow graph in Fig~\ref{fig:Intro_ex}~\cite{thesis_r} for available expression analysis. Table~\ref{tab:Initial Available_exp}(a) shows 
@@ -227,7 +250,7 @@ the change rather than recomputing entire data flow information. Clearly, we exp
 \rput(-20,117){\rnode{a}{$\{(a,b), (c,d)\}$}}
 \rput(-20,109){\rnode{a}{$\{(a,b), (c,d)\}$}}
 
-\rput(0,110){\rnode{a1}{(a)}}
+\rput(0,107){\rnode{a1}{(a)}}
 
 \ncline{->}{n1}{n2}
 \ncline{->}{n2}{n3}
@@ -400,7 +423,7 @@ frameworks. It describes the implemented Liveness-based Inter-procedural Reachin
 \section{Organization of the Report}
 The report is organized as follows. Chapter 2 describes incremental analysis for bit-vector frameworks.
 Chapter 3 focuses on an overview of PRISM. Chapter 4 describes our implementation of Liveness-based Reaching Definition analysis in 
-PRISM and performance measurements. Our addition to PRISM and performance measurement is described in Chapter 5.
+PRISM. Our addition to PRISM and performance measurement is described in Chapter 5.
 Chapter 6 describes some of issues in doing incremental analysis for general frameworks. Chapter 7 describes some extensions
 that can be made to the current work. 
 
@@ -788,8 +811,11 @@ Thus, the final solution is shown in Table~\ref{tab:Available_exp_final_solution
   \end{center}
 \end{table}
 
-% multiple changes  
-We note that although the example above is for a single change, a similar method can be applied for multiple changes in the control flow graph.
+% multiple changes
+The above example is for a single change in graph. Since we are computing data flow values at boundary nodes and propagating the values to its neighboring nodes, we can
+easily extend this method for multiple changes in the control graph.
+
+% We note that although the example above is for a single change, a similar method can be applied for multiple changes in the control flow graph. 
 
 \subsection{Node Listing as Affected Region}
 A \textit{node listing}~\cite{node_listing} for control flow graph \textit{G=(N,E,n$_0$)}, where \textit{N} is the set of nodes, \textit{E} is the set of edges, and \textit{n$_0$} is the
@@ -1001,7 +1027,7 @@ the language to the PRISM IR.
 Figure~\ref{fig:Architectur_prism1}~\cite{thesis_v} shows a block diagram of various PRISM components. IR generator generates independent intermediate representation of the program to be 
 analyzed. The generated analyzer takes IR as an input and produces output reports.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \psset{unit=1mm}
 \begin{pspicture}(-20,15)(115,90)
@@ -1524,7 +1550,7 @@ the lattice of the data flow problem
 
 In order to understand PRISM, we have implemented a query for Liveness-based reaching definition analysis using PRISM. Other queries which are 
 implemented using PRISM are Liveness analysis, Strongly Liveness analysis, Liveness analysis with aliasing and Strong liveness analysis with aliasing.
-Full specifications of Reaching definition with and without liveness are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
+Full specifications of Reaching definition with and without liveness extended to inter-procedural level are given in Appendix~\ref{ap:C}. This section describes flow functions for reaching definition analysis with and without
 liveness.
 
 \section{Reaching definition analysis}
@@ -1794,7 +1820,7 @@ program point in liveness-based analysis is much smaller then that of the normal
 and global declarations as a statement and thus there is a possibility that the results from the benchmark may not concur with the actual numbers.
 
 Performance measurement of reaching definition without liveness is shown in table~\ref{tab:performance_without_l}.
-\begin{table}[H]
+\begin{table}[t]
   \begin{center}
       %\label{tab:Available_exp}
     \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
@@ -1822,7 +1848,7 @@ Performance measurement of reaching definition without liveness is shown in tabl
 
 
 The performance measurement of reaching definition with liveness is shown in table~\ref{tab:performance_with_l}.
-\begin{table}[H]
+\begin{table}[t]
   \begin{center}
       %\label{tab:Available_exp}
     \begin{tabular}{|c|p{1.5cm}|p{2cm}|p{2cm}|p{2cm}|}
@@ -1849,7 +1875,7 @@ The performance measurement of reaching definition with liveness is shown in tab
 
 
 Figure~\ref{fig:bench_mark} shows a comparison between two analysis.
-\begin{figure}[H]	
+\begin{figure}[t]	
 \centering
 \includegraphics[width=0.8\textwidth]{graph.eps}
 \caption{Percentage reduction in size of data set for Reaching definition analysis with and without liveness}
@@ -1884,9 +1910,9 @@ It consist of following two parts:
 \end{itemize}
 
 \item \textbf{Update} Merges the computed information for the affected region with the old information.
-
 \end{itemize}
 
+Steps for running Incremental Driver is given in Appendix~\ref{ap:A}
 
 \section{Architecture of Incremental Solver}
 Figure~\ref{fig:Architectur_incrementalPrism} shows the architecture of the Incremental Solver. The \textit{Preprocessor}
@@ -1897,7 +1923,7 @@ for the affected region and passes the results to the \textit{Merger}. \textit{M
 Note that recreation of specifications for the given analysis is not required in Incremental analysis. Therefore, solver will use the old generated specifications.
 
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \psset{unit=1mm}
 \begin{pspicture}(-20,-20)(115,90)
@@ -1996,10 +2022,11 @@ Using Incremental Solver we have performed reaching definition analysis. It cons
   \item \textbf{Inter-procedural flow functions} These functions enable transferring information from a caller context to callee and vice versa.
  Since Kulang does not currently support specification for inter-procedural analysis, they are implemented in java.
 \end{itemize}
-\item Java code for creating affected region:
+\item Java code for creating affected region, :
 \begin{itemize}
  \item \textbf{Creation of Affected Region} The function \texttt{RDef$\_$affectednodes()} creates affected region for reaching definition
- analysis. The affected region creation algorithm, and hence the implementation depend on the kind of analysis.
+ analysis. Ideally this should be generated by Kulang compiler. However, at the moment we have focused on the solver. Hence, it has been written manually.
+ The affected region creation algorithm, and hence the implementation depend on the kind of analysis.
  \end{itemize}
 \end{itemize}
 
@@ -2074,7 +2101,7 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \centering
 \psset{unit=1mm}
 \begin{pspicture}(0,20)(150,250)
-% \psframe(0,20)(150,265)
+ \psframe(-20,0)(160,275)
 \rput(60,270){\rnode{a}{main}}
 \putnode{n1}{origin}{60}{265}{%
      \psframebox[linewidth=.3,framesep=2.5, framearc=.4]{\hspace{10mm}}}
@@ -2105,7 +2132,7 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \rput(71,187){\rnode{a}{n8}}
      
 \putnode{n10}{n8}{0}{-13}{%
-     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func1( )}}
+     \psframebox[linewidth=.3,framesep=1.5, framearc=.4]{func1(z)}}
      \rput(67,174){\rnode{a}{n10}}
 
 \putnode{n13}{n10}{-40}{0}{%
@@ -2232,8 +2259,9 @@ Some of the test cases that we used to check the Incremental Solver are as follo
 \caption{Test case}
    \label{fig:testCase1}
 \end{figure}
-
-
+% 
+% \section{Summary}
+% The description of implemented driver is descriced 
 
 
 
@@ -2727,9 +2755,9 @@ Thus, the solution is to create an affected region for all kind of changes.
 
 
 
-\section{General Optimization of the size of Affected Region}
+\section{Reducing the size of Affected Region}
 We outline an optimization idea to reduce the size of the affected region which can 
-eliminate certain boundary nodes from being included in the boundary region.
+eliminate certain boundary nodes from being included in the affected region.
 This optimization is based on the observation that some boundary nodes can be characterized
 by the concept of \emph{dominance frontier}. We define the concept of \textit{Dominance Frontier} before elaborating on the optimization idea.
 
@@ -2741,7 +2769,7 @@ If $n \neq m$, then $n$ \textit{strictly dominates} $m$ and is denotes as $n > m
 The \textit{dominance frontier}~\cite{book} of a node $n$, denoted by \textbf{df(n)} is given as:
 \begin{equation}
 \begin{split}
-\mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n  m )\} \\	  
+\mbox{\textit{df(n)}} &= \{ m \mid \exists p \in \textit{pred(m)}, ( n \geq p \mbox{ and } n \ngtr m )\} \\	  
 \end{split} 
 \end{equation}
 
@@ -2853,7 +2881,7 @@ The information coming from $OUT$ of $n7$ will not affect the $IN$ information o
 This implies that we can exclude the node $n3$, and thus its successor $n4$ from the affected region, reducing the size of the latter.
 We further note that the node $n3$ must be a dominance frontier of the change node ($n4$).
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \psset{unit=1mm}
 \begin{pspicture}(0,0)(100,90)
@@ -2868,7 +2896,7 @@ We further note that the node $n3$ must be a dominance frontier of the change no
      \psframebox[linewidth=.3,framesep=1.7]{$b=1$}}
 \rput(59,80){\rnode{b}{n2}}
 \rput(70,86){\rnode{b1}{\blue$\langle b=\top \rangle$}}
-\rput(70,74){\rnode{b2}{\blue$\langle b=3 \rangle$}}
+\rput(70,74){\rnode{b2}{\blue$\langle b=1 \rangle$}}
 
 \putnode{n3}{n1}{20}{-15}{%
      \psframebox[linewidth=.3,framesep=1.7]{\hspace{10mm}}}
@@ -2917,17 +2945,18 @@ We further note that the node $n3$ must be a dominance frontier of the change no
 
 
 
-\section{Reducing the size of the AR region}
+\paragraph{Reducing the size of the affected region}
 It follows from the above discussion that it is possible to identify such boundary nodes (dominance frontier of changed node) during AR construction.
 All such nodes have an outside influence. If the outside influence keeps the value to $\bot$ (or does not allow it to change), 
 then there is no need to include this node in AR. This can help in reducing the size of AR.
 In general frameworks, we need to create AR for almost all the cases. However, we can still reduce the size of the affected region. This optimization is applicable
 for bit-vector vector frameworks also. 
 
-This optimization can work only on single change in a program. Handling for multiple changes need to be studied. 
+ 
 
-
-
+\section{Summary}
+In general frameworks, we need to create affected region for almost every kind of change. However it is possible to reduce the size of affected region by excluding boundary
+nodes where outside influence keeps the values at IN to $\bot$. This optimization can work only on a change in a program. Handling for multiple changes need to be studied.
 
 
 
