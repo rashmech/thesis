@@ -42,10 +42,10 @@
 \maketitle
 %\begin{comment}
 
-\centering
-\includegraphics[width=1.3\textwidth, height=1.3\textheight]{declaration.eps}
-\includegraphics[width=1.3\textwidth, height=1.3\textheight]{approval.eps}
+\pagenumbering{Roman}
 
+\includegraphics[width=1.4\textwidth, height=1.3\textheight]{declaration.eps}
+\includegraphics[width=1.4\textwidth, height=1.3\textheight]{approval.eps}
 % % \includepdf{declaration.eps}
 % % \includepdf{approval.eps}
 
@@ -83,16 +83,19 @@ This report also presents some challenges involved and possible solutions for do
 \addtocontents{lof}{\protect\noaddvspace}
 %\end{comment}
 \addtocontents{lof}{\vskip -1.2cm}
+
 \tableofcontents
-
+\thispagestyle{empty}
 \listoftables
-
+\thispagestyle{empty}
 \listoffigures
+\thispagestyle{empty}
 
 \cleardoublepage
 \setcounter{page}{1}
 \pagenumbering{arabic}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\addtocontents{toc}{\protect\thispagestyle{empty}}
 \chapter{Overview}
 \section{Introduction}
 When a program undergoes changes during development, some or all of data flow information computed earlier becomes invalid.
